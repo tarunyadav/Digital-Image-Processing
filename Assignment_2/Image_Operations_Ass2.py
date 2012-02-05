@@ -93,6 +93,7 @@ elif(user_input==4):
 		Pi = float(raw_input("\nType Pi here : "))
 		Pf = float(raw_input("\nType Pf here : "))		
 		
+		
 		P = 255.0/(Pf-Pi);		
 		for i in range(0,size[0],1):
 			    for j in range(0,size[1],1):
