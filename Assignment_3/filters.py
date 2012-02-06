@@ -48,6 +48,19 @@ def SaveToFile(output_name):
 	print "Noise removed image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif ...Done\n'
 	image_mod.show()
 
+#Function to find median
+def FindMedian(H,Median,pixel_less_med,half)
+	if (pixel_less_med == half):
+		return Median
+	elif (pixel_less_med < half):
+		Median = Median+1
+		pixel_less_med = pixel_less_med + H[Median]
+		return FindMedian(H,Median,pixel_less_med,half)
+	elif(pixel_less_med>half):
+		pixel_less_med = pixel_less_med - H[Median]
+		Median = Median -1;
+		return FindMedian(H,Median,pixel_less_med,half)
+			
 #Function to add gaussain noise to image array
 def RotatingAverageMask():
 
@@ -87,32 +100,44 @@ def RotatingAverageMask():
 	SaveToFile(output_name)			
 			    		
 #Function to add Salt and pepper noise to image array
-def EfficientMedianMask():
-	boundary = 1.0 - (percent_noise/100.0)
-	actual_percent =0;
-
-	print "\nAdding Salt and Pepper Noise to image "+sys.argv[1]+"\nWait for some time..."
+def EfficientMedianMask(N,M):
+	
 	for i in range(0,size[0],1):
+			    Histogram = zeros(256,dtype=int)
+			    pixel_less_med = 0		
+			    Median=0
+			    start_row=0
+			    end_row=0
+			    start_column=0
+			    end_column=0
 			    for j in range(0,size[1],1):
-			      	if (len(size)==2):
-			    			random_value= 2.0*(rand()-1.0/2);
-			    			if (random_value > boundary):
-			    				image_array[i][j] = 255
-			    				actual_percent = actual_percent+1
-			    			elif(random_value<-boundary):
-				    			image_array[i][j]=0
-				    			actual_percent = actual_percent+1
-				elif(len(size)==3):
-					for k in range(0,size[2],1):
-			    			random_value= 2.0*(rand()-1.0/2);					
-			    			if (random_value > boundary):
-			    				image_array[i][j] = 255
-			    				actual_percent = actual_percent+1
-			    			elif(random_value<-boundary):
-				    			image_array[i][j]=0
-				    			actual_percent = actual_percent+1
-   	
-   	actual_percent = (actual_percent*100.0)/(size[0]*size[1])
+
+			    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]-1) or j in range(0,(M/2) or j in range(size[1]-(M/2),size[1]-2))):
+			    				start_row = min(-(N/2),0-i)
+			    				end_row = min((N/2),size[0]-1-i)
+			    				start_column = min(-(M/2),0-j)
+			    				end_column = min((M/2),size[1]-1-j)
+			    		else : 
+							start_row=-(N/2)
+							end_row=(N/2)+1
+							start_column=-(M/2)
+							end_column=(M/2)+1
+							
+					if (j!=0):
+		    					for k in range(start_row,end_row+1,1):
+		    						H[image_array[i+k][j+end_column]] = H[image_array[i+k][j+end_column]] + 1
+		    						if (H[image_array[i+k][j+end_column]] < Median):
+									pixel_less_med = pixel_less_med+1				
+											
+					Median = FindMedian(H,Median,pixel_less_med,N*M/2)
+					H[image_array[i][j]] = Median
+					
+	    				if (j!=M-1):
+		    					for k in range(start_row,end_row+1,1):
+		    						H[image_array[i+k][j+start_column]] = H[image_array[i+k][j+start_column]] -1			    				
+		    						if (H[image_array[i+k][j+end_column]] < Median):
+									pixel_less_med = pixel_less_med -1 		
+	
    	
 	print "\nSalt and Pepper noise is added with "+str(int(actual_percent)) +" % ...Done\n"
 	output_name = '_SaltAndPepperNoise_'+str(int(actual_percent))+'_percent'
