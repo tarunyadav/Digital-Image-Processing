@@ -1,0 +1,31 @@
+----------------------------------------README for Assigment 3-----------------------------------
+
+(THERE ARE SAMPLE INPUT AND OUTPUT IN SUBMISSION FOLDER. OUTPUT IMAGE NAME CLEARLY MENTION WHAT OPERATION IS APPLIED ON THEM)
+
+1. To run the program for this assignment go to folder and type following on terminal:
+	to add noise:
+		"python add_noise.py standard_test_images/[Image_Name]"
+	to apply filters:
+		"python filters.py standard_test_images_Noise/[Noisy_Image_Name]"
+		
+2. You will get 2 options for first part of assingment: (adding the noise) 
+	Press 1 to  add gaussain noise ____[Enter]
+		type mean for noise ___ [Enter] (generally 0)
+		type variance for noise ___ [Enter] (e.g. 441)
+	Press 2 to  add salt and pepper noise   ___  [Enter]
+		type % of noise you want to add  ___  [Enter]
+	Press Enter to exit
+3. go to standard_test_images_Noise_ folder to see noisy images. In Noise folder images has extension about what operation is done on them (with paramters)	
+4. You will get 2 options for second part of assingment: (applying the filter) 
+	Press 1 to  apply Rotating Average Mask Filter ____[Enter]
+		type height of  mask window ___ [Enter] (e.g. 3)
+		type width of mask window ___ [Enter] (e.g. 3)
+	Press 2 to  apply Median Mask Filter   ___  [Enter]
+		type height of  mask window ___ [Enter] (e.g. 3)
+		type width of mask window ___ [Enter] (e.g. 3)
+	Press Enter to exit
+5. go to standard_test_images_Noise_Output folder to modified image. In ouput folder images has extension about what operation is done on them
+	a. For Roataing Average Mask Filter: _RotatingAverageFilter_NXM
+	a. For Median Mask Filter: _MedianFilter_NXM
+	
+For any doubt or query mail at taruny@iitrpr.ac.in
