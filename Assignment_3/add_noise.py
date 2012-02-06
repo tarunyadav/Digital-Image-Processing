@@ -31,11 +31,11 @@ def SaveToFile(output_name):
 	file_name= sys.argv[1].split('/')
 
 	# check if output directory exists or not. if doesn't exists then create it
-	if (os.path.exists(os.path.dirname(file_name[0]+'_Output/'))==False):
-	    print "\nCreating Directory "+file_name[0]+"_Output ... Done"
-	    os.mkdir(file_name[0]+'_Output',0777) 
+	if (os.path.exists(os.path.dirname(file_name[0]+'_Noise/'))==False):
+	    print "\nCreating Directory "+file_name[0]+"_Noise ... Done"
+	    os.mkdir(file_name[0]+'_Noise',0777) 
 	else:
-	    print "\nOutput Directory "+file_name[0]+"_Output already exist... Done"		
+	    print "\nOutput Directory "+file_name[0]+"_Noise already exist... Done"		
 
 	#convert array from float to uint8 for image display
 	image_arr = image_array.astype('uint8')
@@ -44,7 +44,7 @@ def SaveToFile(output_name):
 	image_mod=fromarray(image_array);
 	print "Saving the Noise added image to output directory..."
 	# save the image in destination folder	
-	image_mod.save(file_name[0]+'_Output/'+file_name[1].split('.')[0]+output_name+'.gif')
+	image_mod.save(file_name[0]+'_Noise/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Noisy image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif ...Done\n'
 	image_mod.show()
 

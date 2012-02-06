@@ -24,6 +24,7 @@ image = open(sys.argv[1])
 image_array = array(image);
 size = image_array.shape
 image_arr = ones((size[0],size[1]),dtype=float)
+
 #Save the output file
 def SaveToFile(output_name,image_arr):
 				    		
@@ -65,28 +66,55 @@ def FindMedian(H,Median,pixel_less_med,half):
 			Median = Median -1
 			return FindMedian(H,Median,pixel_less_med,half)
 			
-#Function to add gaussain noise to image array
+#Function to apply average mask filter to image
 def RotatingAverageMask(N,M):
+	mean_array = ones((size[0],size[1]),dtype=float)
+	variance_array = ones((size[0],size[1]),dtype=float)
 	
+	for i in range(0,size[0],1):
+			 for j in range(0,size[1],1):
+			    		if(  i in range (size[0]-(N-1), size[0]) or j in range(size[1]-(M-1),size[1])):
+			    				start_row = 0
+			    				end_row = min(N-1,size[0]-1-i)
+			    				start_column = 0
+			    				end_column = min(M-1,size[1]-1-j)
+			    		else : 
+							start_row=0
+							end_row=N-1
+							start_column=0
+							end_column=M-1			
+
+					window = zeros(1,dtype=float)
+					for k in range(start_row,end_row+1,1):
+						window = append(window,image_array[i+k][j+start_column:j+end_column+1])
+					mean_array[i][j] = mean(window)
+					variance_array[i][j] = var(window)			
+					
 	New_N = 2*(N-1)+1
 	New_M = 2*(M-1)+1
 	for i in range(0,size[0],1):
 			 for j in range(0,size[1],1):
-			    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]) or j in range(0,(M/2)) or j in range(size[1]-(M/2),size[1])):
-			    				start_row = max(-(N/2),0-i)
-			    				end_row = min((N/2),size[0]-1-i)
-			    				start_column = max(-(M/2),0-j)
-			    				end_column = min((M/2),size[1]-1-j)
+			    		if(i in range(0,(New_N/2)) or  i in range (size[0]-(New_N/2), size[0]) or j in range(0,(New_M/2)) or j in range(size[1]-(New_M/2),size[1])):
+			    				start_row = max(-(New_N/2),0-i)
+			    				end_row = min((New_N/2),size[0]-1-i)
+			    				start_column = max(-(New_M/2),0-j)
+			    				end_column = min((New_M/2),size[1]-1-j)
 			    		else : 
 							start_row=-(N/2)
 							end_row=(N/2)
 							start_column=-(M/2)
 							end_column=(M/2)			    	
-	
-		
-	print "\nGaussian noise is added with  mean: "+str(mean)+"and variance: "+str(variance)+"...Done\n"
-	output_name = '_GaussainNoise_mean_'+str(mean)+'_variance_'+str(variance)+'_percent'
-	SaveToFile(output_name)			
+					min_variance=10000000;
+					for m in range(i+start_row,i+1,1):
+						for n in range(j+start_column,j+1,1):
+							if (variance_array[m][n]<min_variance):
+								min_variance = variance_array[m][n]
+								min_variance_index = (m,n)
+					image_arr[i][j] = mean_array[min_variance_index[0]][min_variance_index[1]] 
+					
+	print "\nRotating Average Mask Filter is applied to image  ...Done\n"
+	output_name = '_RotatingAverageFilter_'+str(N)+'X'+str(M)
+	SaveToFile(output_name,image_arr)
 			    		
 #Function to add Salt and pepper noise to image array
 def EfficientMedianMask(N,M):
@@ -111,9 +139,7 @@ def EfficientMedianMask(N,M):
 							end_row=(N/2)
 							start_column=-(M/2)
 							end_column=(M/2)
-#					print "FOR ("	+str(i)+","+str(j)+"):"
-#					print "\t\trow is from "+str(start_row)+" to "+str(end_row)		
-#					print "\t\tcolumn is from "+str(start_column)+" to "+str(end_column)
+
 					if (j==0):
 							for m in range(start_row,end_row+1,1):
 								for n in range(start_column,end_column+1,1):
@@ -156,11 +182,13 @@ filter_type = user_input_fun();
 
 ## Rotating Average Mask case	
 if (filter_type==1):
-	RotatingAverageMask()
+	row_size = int(raw_input("\nType 'height' of window[int]: "))
+	column_size = int(raw_input("\nType 'width of window[int]': "))	
+	RotatingAverageMask(row_size,column_size)
 ##Efficient Median Mask case
 elif(filter_type==2):
 	row_size = int(raw_input("\nType 'height' of window[int]: "))
-	column_size = int(raw_input("\nType 'width of window[int]': "))	
+	column_size = int(raw_input("\nType 'width' of window[int]: "))	
 	EfficientMedianMask(row_size,column_size)
 
 
