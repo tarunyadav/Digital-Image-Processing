@@ -23,9 +23,9 @@ from pylab import *
 image = open(sys.argv[1])  
 image_array = array(image);
 size = image_array.shape
-
+image_arr = ones((size[0],size[1]),dtype=float)
 #Save the output file
-def SaveToFile(output_name):
+def SaveToFile(output_name,image_arr):
 				    		
 	# writing distance matrix to the output folder with _output.txt extension
 	file_name= sys.argv[1].split('/')
@@ -38,10 +38,10 @@ def SaveToFile(output_name):
 	    print "\nOutput Directory "+file_name[0]+"_Output already exist... Done"		
 
 	#convert array from float to uint8 for image display
-	image_arr = image_array.astype('uint8')
+	image_arr_mod = image_arr.astype('uint8')
 
 	# convert from array to image
-	image_mod=fromarray(image_array);
+	image_mod=fromarray(image_arr_mod);
 	print "Saving the Noise removed image to output directory..."
 	# save the image in destination folder	
 	image_mod.save(file_name[0]+'_Output/'+file_name[1].split('.')[0]+output_name+'.gif')
@@ -49,52 +49,41 @@ def SaveToFile(output_name):
 	image_mod.show()
 
 #Function to find median
-def FindMedian(H,Median,pixel_less_med,half)
+def FindMedian(H,Median,pixel_less_med,half):
 	if (pixel_less_med == half):
-		return Median
+		return Median,pixel_less_med
 	elif (pixel_less_med < half):
 		Median = Median+1
 		pixel_less_med = pixel_less_med + H[Median]
 		return FindMedian(H,Median,pixel_less_med,half)
 	elif(pixel_less_med>half):
 		pixel_less_med = pixel_less_med - H[Median]
-		Median = Median -1;
-		return FindMedian(H,Median,pixel_less_med,half)
+		if(pixel_less_med<half):
+			pixel_less_med = pixel_less_med + H[Median]
+			return Median,pixel_less_med
+		else:
+			Median = Median -1
+			return FindMedian(H,Median,pixel_less_med,half)
 			
 #Function to add gaussain noise to image array
-def RotatingAverageMask():
-
-	#Applying Gaussian noise to image array
-	for i in range(0,size[0],1):
-			    for j in range(0,size[1],2):
-	    			U1 = rand();
-	    			U2 = rand();
-	    			factor = sqrt(-2.0*variance*log(U1))
-			    	if (len(size)==2):
-			    	    		image_array[i][j]=image_array[i][j] + int((factor*cos(2*pi*U2)) +mean)	
-				    		if (j != size[1]-1 ):	
-				    	    		image_array[i][j+1]=image_array[i][j+1] + int((factor*sin(2*pi*U2)) +mean)	
-				if (len(size)==3):
-						for k in range(0,size[2],1):
-				    	    		image_array[i][j][k]=image_array[i][j][k] + int((factor*cos(2*pi*U2)) +mean)	
-					    		if (j != size[1]-1 ):			    	    		
-					    	    		image_array[i][j+1][k]=image_array[i][j+1][k] + int((factor*sin(2*pi*U2)) +mean)	
-					    	    		
-	# Changing >255 to 255 and <0 to 0					    	    		
-	for i in range(0,size[0],1):
-			    for j in range(0,size[1],1):
-			    	if (len(size)==2):
-				    	if (image_array[i][j]>255):
-				    		image_array[i][j]=255
-				    	if (image_array[i][j]<0):
-				    		image_array[i][j]=0			
-				elif(len(size)==3):
-					for k in range(0,size[2],1):
-				    		if (image_array[i][j][k]>255):
-				    			image_array[i][j][k]=255
-					    	if (image_array[i][j][k]<0):
-					    		image_array[i][j][k]=0				    			
+def RotatingAverageMask(N,M):
 	
+	New_N = 2*(N-1)+1
+	New_M = 2*(M-1)+1
+	for i in range(0,size[0],1):
+			 for j in range(0,size[1],1):
+			    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]) or j in range(0,(M/2)) or j in range(size[1]-(M/2),size[1])):
+			    				start_row = max(-(N/2),0-i)
+			    				end_row = min((N/2),size[0]-1-i)
+			    				start_column = max(-(M/2),0-j)
+			    				end_column = min((M/2),size[1]-1-j)
+			    		else : 
+							start_row=-(N/2)
+							end_row=(N/2)
+							start_column=-(M/2)
+							end_column=(M/2)			    	
+	
+		
 	print "\nGaussian noise is added with  mean: "+str(mean)+"and variance: "+str(variance)+"...Done\n"
 	output_name = '_GaussainNoise_mean_'+str(mean)+'_variance_'+str(variance)+'_percent'
 	SaveToFile(output_name)			
@@ -105,43 +94,49 @@ def EfficientMedianMask(N,M):
 	for i in range(0,size[0],1):
 			    Histogram = zeros(256,dtype=int)
 			    pixel_less_med = 0		
-			    Median=0
+			    Median=128
 			    start_row=0
 			    end_row=0
 			    start_column=0
 			    end_column=0
 			    for j in range(0,size[1],1):
 
-			    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]-1) or j in range(0,(M/2) or j in range(size[1]-(M/2),size[1]-2))):
-			    				start_row = min(-(N/2),0-i)
+			    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]) or j in range(0,(M/2)) or j in range(size[1]-(M/2),size[1])):
+			    				start_row = max(-(N/2),0-i)
 			    				end_row = min((N/2),size[0]-1-i)
-			    				start_column = min(-(M/2),0-j)
+			    				start_column = max(-(M/2),0-j)
 			    				end_column = min((M/2),size[1]-1-j)
 			    		else : 
 							start_row=-(N/2)
-							end_row=(N/2)+1
+							end_row=(N/2)
 							start_column=-(M/2)
-							end_column=(M/2)+1
-							
-					if (j!=0):
+							end_column=(M/2)
+#					print "FOR ("	+str(i)+","+str(j)+"):"
+#					print "\t\trow is from "+str(start_row)+" to "+str(end_row)		
+#					print "\t\tcolumn is from "+str(start_column)+" to "+str(end_column)
+					if (j==0):
+							for m in range(start_row,end_row+1,1):
+								for n in range(start_column,end_column+1,1):
+										Histogram[image_array[i+m][j+n]] = Histogram[image_array[i+m][j+n]] +1
+										if (image_array[i+m][j+n] <= Median):
+											pixel_less_med = pixel_less_med+1	
+					elif (0<j<size[1]-(M/2)):
 		    					for k in range(start_row,end_row+1,1):
-		    						H[image_array[i+k][j+end_column]] = H[image_array[i+k][j+end_column]] + 1
-		    						if (H[image_array[i+k][j+end_column]] < Median):
+		    						Histogram[image_array[i+k][j+end_column]] = Histogram[image_array[i+k][j+end_column]] + 1
+		    						if (image_array[i+k][j+end_column] <= Median):
 									pixel_less_med = pixel_less_med+1				
-											
-					Median = FindMedian(H,Median,pixel_less_med,N*M/2)
-					H[image_array[i][j]] = Median
-					
-	    				if (j!=M-1):
+					Median,pixel_less_med = FindMedian(Histogram,Median,pixel_less_med,(end_row-start_row+1)*(end_column-start_column+1)/2)
+					image_arr[i][j] = Median
+	    				if ((M/2)-1<j<size[1]):
 		    					for k in range(start_row,end_row+1,1):
-		    						H[image_array[i+k][j+start_column]] = H[image_array[i+k][j+start_column]] -1			    				
-		    						if (H[image_array[i+k][j+end_column]] < Median):
+		    						Histogram[image_array[i+k][j+start_column]] = Histogram[image_array[i+k][j+start_column]] -1			    				
+		    						if (image_array[i+k][j+start_column] <= Median):
 									pixel_less_med = pixel_less_med -1 		
 	
    	
-	print "\nSalt and Pepper noise is added with "+str(int(actual_percent)) +" % ...Done\n"
-	output_name = '_SaltAndPepperNoise_'+str(int(actual_percent))+'_percent'
-	SaveToFile(output_name)
+	print "\nEfficient Median Filter is applied to image  ...Done\n"
+	output_name = '_MedianFilter_'+str(N)+'X'+str(M)
+	SaveToFile(output_name,image_arr)
 	
 
 # input for type of noise that user want to add
@@ -164,7 +159,9 @@ if (filter_type==1):
 	RotatingAverageMask()
 ##Efficient Median Mask case
 elif(filter_type==2):
-	EfficientMedianMask()
+	row_size = int(raw_input("\nType 'height' of window[int]: "))
+	column_size = int(raw_input("\nType 'width of window[int]': "))	
+	EfficientMedianMask(row_size,column_size)
 
 
 	
