@@ -16,6 +16,7 @@ from sys import *
 from scipy import *
 from numpy import *
 from Image import *
+from ImageFilter import *
 from pylab import *
 
 
@@ -51,15 +52,19 @@ def SaveToFile(output_name):
 
 
 #Function to robert operator to image array
-def unmask_sharpening():
+def unmask_sharpening(C):
 	global image_arr
-	for i in range(0,size[0]-1,1):
-		 for j in range(0,size[1]-1,1):
-				image_arr[i][j] =  abs(image_array[i][j]-image_array[i+1][j+1])+abs(image_array[i][j+1]-image_array[i+1][j])
-										
+		
+	Blurred_image = image.filter(BLUR)								
+	Blurred_image_array = array(Blurred_image)	
+	edge_array = image_array - Blurred_image_array
+	im = fromarray(edge_array)
+	im.save("tarun.gif")
+	edge_array = edge_array.clip(0,255)
+	image_arr = image_array -  C*edge_array
 	image_arr = image_arr.clip(0,255)							
-	print "\nApplying unmask sharpening "+"...Done\n"
-	output_name = '_unmask_sharpening_'
+	print "\nApplying unmask sharpening with constant "+str(C)+" ...Done\n"
+	output_name = '_unmask_sharpening_'+str(C)
 	SaveToFile(output_name)			
 			    		
 #Function to robert operator to image array
@@ -104,7 +109,8 @@ def user_input_fun():
 sharpening_type = user_input_fun();		
 ##Robert Operator
 if (sharpening_type==1):
-	unmask_sharpening()
+	C = float(raw_input("Type the constact C for sharpening (Original - C*edge_image) :\n"))
+	unmask_sharpening(C)
 	
 ##Laplace Operator
 elif(sharpening_type==2):
