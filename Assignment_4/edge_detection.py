@@ -36,7 +36,7 @@ def SaveToFile(output_name):
 	    print "\nCreating Directory "+file_name[0]+"_Edge ... Done"
 	    os.mkdir(file_name[0]+'_Edge',0777) 
 	else:
-	    print "\nOutput Directory "+file_name[0]+"_Noise already exist... Done"		
+	    print "\nOutput Directory "+file_name[0]+"_Edge already exist... Done"		
 
 	#convert array from float to uint8 for image display
 	image_arr = image_arr.astype('uint8')
@@ -48,6 +48,7 @@ def SaveToFile(output_name):
 	image_mod.save(file_name[0]+'_Edge/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Edge converted image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif ...Done\n'
 	image_mod.show()
+
 
 #Function to robert operator to image array
 def robert():
