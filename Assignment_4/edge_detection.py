@@ -21,10 +21,12 @@ from pylab import *
 
 # open the image which is passed in argument
 image = open(sys.argv[1])  
+image = image.convert('L')
 image_array = array(image);
 size = image_array.shape
 image_array = array(image_array,dtype=float)
 image_arr = zeros((size[0],size[1]),dtype=float)
+
 #Save the output file
 def SaveToFile(output_name):
 	global image_arr				
@@ -59,46 +61,56 @@ def robert():
 										
 	image_arr = image_arr.clip(0,255)							
 	print "\nApplying Robert Operator: "+"...Done\n"
-	output_name = '_Robert_operator_'
+	output_name = '_Robert_operator'
 	SaveToFile(output_name)			
 			    		
 #Function to sobel operator to image array
 def sobel(edge_type):
 	global image_arr
-	if(edge_type=='h'):
+	
+	if(edge_type==1):
 			a_1_1= 1;	a_1_2=2	;	a_1_3=1
 			a_2_1= 0;	a_2_2=0	;	a_2_3=0
 			a_3_1=-1;	a_3_2=-2	;	a_3_3=-1
 			edge_type = 'horizontal'
-	elif(edge_type=='v'):
+	elif(edge_type==2):
 			a_1_1=-1;	a_1_2=0	;	a_1_3=1
 			a_2_1=-2;	a_2_2=0	;	a_2_3=2
 			a_3_1=-1;	a_3_2=0	;	a_3_3=1	
 			edge_type = 'vertical'
-	elif(edge_type=='d1'):
+	elif(edge_type==3):
 			a_1_1= 0;	a_1_2=1	;	a_1_3=2
 			a_2_1=-1;	a_2_2=0	;	a_2_3=1
 			a_3_1=-2;	a_3_2=-1	;	a_3_3=0	
 			edge_type = 'diagonal_-45_deg'
-	elif(edge_type=='d2'):
+	elif(edge_type==4):
 			a_1_1= 2;	a_1_2=1	;	a_1_3=0
 			a_2_1= 1;	a_2_2=0	;	a_2_3=-1
 			a_3_1= 0;	a_3_2=-1	;	a_3_3=-2	
 			edge_type = 'diagonal_+45_deg'
 
-	for i in range(1,size[0]-1,1):
-			 for j in range(1,size[1]-1,1):
-						image_arr[i][j] = (a_1_1*image_array[i-1][j-1] + a_1_2*image_array[i-1][j] + a_1_3*image_array[i-1][j+1]+						     a_2_1*image_array[i][j-1] + a_2_2*image_array[i][j] + a_2_3*image_array[i][j+1]+ a_3_1*image_array[i+1][j-1] + a_3_2*image_array[i+1][j] + a_3_3*image_array[i+1][j+1])
+# Default sobel operator
+	if (edge_type==0):
+			for i in range(1,size[0]-1,1):
+				 for j in range(1,size[1]-1,1):
+				 			image_arr[i][j] = abs(image_array[i-1][j-1] + 2*image_array[i-1][j] + image_array[i-1][j+1]- image_array[i+1][j-1] -2* image_array[i+1][j] -image_array[i+1][j+1]) + abs(-1*image_array[i-1][j-1] + image_array[i-1][j+1]-2*image_array[i][j-1] + 2*image_array[i][j+1]- image_array[i+1][j-1] +image_array[i+1][j+1])
+			edge_type = 'standard'				 			
+			
+	else:
+			for i in range(1,size[0]-1,1):
+				 for j in range(1,size[1]-1,1):
+							image_arr[i][j] = (a_1_1*image_array[i-1][j-1] + a_1_2*image_array[i-1][j] + a_1_3*image_array[i-1][j+1]+						     a_2_1*image_array[i][j-1] + a_2_2*image_array[i][j] + a_2_3*image_array[i][j+1]+ a_3_1*image_array[i+1][j-1] + a_3_2*image_array[i+1][j] + a_3_3*image_array[i+1][j+1])
 										     
 	image_arr = image_arr.clip(0,255)																	     
-	print "Applying edge detection with "+edge_type+"filter ...Done\n"
+	print "Applying edge detection with sobel "+edge_type+"filter ...Done\n"
 	output_name = '_sobel_'+edge_type
 	SaveToFile(output_name)
 	
 
-#Function to robert operator to image array
+#Function to Laplace operator to image array
 def laplace(method_used):
 	global image_arr
+	
 	if(method_used==1):
 		a_1_1= 0;	a_1_2=1	;	a_1_3=0
 		a_2_1= 1;	a_2_2=-4	;	a_2_3=1
@@ -111,15 +123,14 @@ def laplace(method_used):
 		method_used = '8_neighbors'
 	for i in range(1,size[0]-1,1):
 		 for j in range(1,size[1]-1,1):
-				image_arr[i][j] = (a_1_1*image_array[i-1][j-1] + a_1_2*image_array[i-1][j] + a_1_3*image_array[i-1][j+1]+						     a_2_1*image_array[i][j-1] + a_2_2*image_array[i][j] + a_2_3*image_array[i][j+1]+ a_3_1*image_array[i+1][j-1] + a_3_2*image_array[i+1][j] + a_3_3*image_array[i+1][j+1]) 
-				#print image_array[i][j]
-										
+				image_arr[i][j] = (a_1_1*image_array[i-1][j-1] + a_1_2*image_array[i-1][j] + a_1_3*image_array[i-1][j+1]+						     a_2_1*image_array[i][j-1] + a_2_2*image_array[i][j] + a_2_3*image_array[i][j+1]+ a_3_1*image_array[i+1][j-1] + a_3_2*image_array[i+1][j]+ a_3_3*image_array[i+1][j+1]) 
+
 	image_arr = image_arr.clip(0,255)							
 	print "\nApplying Laplace Operator with "+method_used+" approach ...Done\n"
 	output_name = '_Laplace_operator_'+method_used
 	SaveToFile(output_name)	
 	
-# input for type of noise that user want to add
+# input for type of edge that user wants to detect
 def user_input_fun():
 	operator_type = raw_input("\nPress 1 to apply Robert operator to image : "+"\nPress 2 to apply Sobel operator to image :"+"\nPress 3 to apply Laplace operator to image :"+"\nPress Enter to exit: \n")
 	# Wrong input case	
@@ -131,7 +142,7 @@ def user_input_fun():
 	else:
 		return int(operator_type)
 
-# Calling the user input function for noise type input
+# Calling the user input function for type of image
 operator_type = user_input_fun();		
 ##Robert Operator
 if (operator_type==1):
@@ -139,12 +150,12 @@ if (operator_type==1):
 	
 ##Sobel Operator	
 elif (operator_type==2):	
-	edge_type = raw_input("\nPress h for horizontal edge detection : "+"\nPress v for vertical edge detection: "+"\nPress d1 for -45 deg. diagonal edge detection:  "+"\nPress d2 for +45 deg. diagonal edge detection: \n")
+	edge_type = int(raw_input("\nPress 0 for default sobel operator edge detection: "+"\nPress 1 for horizontal edge detection : "+"\nPress 2 for vertical edge detection: "+"\nPress 3 for -45 deg. diagonal edge detection:  "+"\nPress 4 for +45 deg. diagonal edge detection: \n" ))
 	sobel(edge_type);
 	
 ##Laplace Operator
 elif(operator_type==3):
-	method_used = int(raw_input("\nPress 1 for edge detection using 4 neightbor approach : "+"\nPress 2 for edge detection using 8 neightbor approach : \n"))
+	method_used = int(raw_input("\nPress 1 for edge detection using 4 neighbor approach : "+"\nPress 2 for edge detection using 8 neighbor approach : \n"))
 	laplace(method_used);
 	
 
