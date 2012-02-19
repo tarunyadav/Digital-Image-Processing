@@ -93,7 +93,7 @@ def LowPass(cutoff_freq):
 	global FFT_image
 	global Filtered_FFT
 	global Filter
-	print cutoff_freq	
+
 	for i in range(0,size[0]-1,1):
 		 for j in range(0,size[1]-1,1):
 		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<cutoff_freq):
@@ -112,7 +112,7 @@ def HighPass(cutoff_freq):
 	global FFT_image
 	global Filtered_FFT
 	global Filter
-	print cutoff_freq
+
 	for i in range(0,size[0]-1,1):
 		for j in range(0,size[1]-1,1):
 		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))>cutoff_freq):
@@ -131,7 +131,7 @@ def BandPass(cutoff_freq_lower,cutoff_freq_upper):
 	global FFT_image
 	global Filtered_FFT
 	global Filter
-	print cutoff_freq
+
 	for i in range(0,size[0]-1,1):
 		 for j in range(0,size[1]-1,1):
 	 		if (cutoff_freq_lower<sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<cutoff_freq_upper):
@@ -164,7 +164,7 @@ def cutoff_freq_input():
 	global MAX_FREQUENCY
 	global Default
 	print "here"+str(MAX_FREQUENCY)
-	cutoff_freq = raw_input("\nPress Enter for default cutoff frequency [3dB(.707 of input)]: "+"\nType cutoff frequency, if not default  : \n" )
+	cutoff_freq = raw_input("\nPress Enter for default cutoff frequency fraction [3dB(.707 of maximum)]: "+"\nType cutoff frequency fraction, if not default  : \n" )
 	if(cutoff_freq==""):
 		return Default
 	else:
@@ -175,7 +175,6 @@ def main():
 
 	# initialization of all variables and arrays
 	init()
-	
 	# Calling the user input function for type of image
 	filter_type = user_input_fun()
 	##LowPass Operator
@@ -188,15 +187,15 @@ def main():
 
 	##BandPass Operator
 	elif(filter_type==3):
-		print "Default cutoff frequency is [3dB(.707 of input)]:"
-		cutoff_freq_lower = raw_input("\nType lower cutoff frequency, if not default  : \n")
-		cutoff_freq_upper = raw_input("\nType upper cutoff frequency, if not default  : \n")
+		print "Default cutoff frequency is [3dB(.707 of maximum)]:"
+		cutoff_freq_lower = raw_input("\nType lower cutoff frequency fraction, if not default  : \n")
+		cutoff_freq_upper = raw_input("\nType upper cutoff frequency fraction, if not default  : \n")
 		if (cutoff_freq_lower==""):
 			cutoff_freq_lower = Default_Lower
 		if(cutoff_freq_upper==""):
 			cutoff_freq_upper = Default_Upper
 
-		BandPass(float(cutoff_freq_lower),float(cutoff_freq_upper))
+		BandPass(float(cutoff_freq_lower)*MAX_FREQUENCY,float(cutoff_freq_upper)*MAX_FREQUENCY)
 	
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")
 	if(rerun==""):
