@@ -46,20 +46,22 @@ def init():
 	image_array = array(image);
 	size = image_array.shape
 	image_array = array(image_array,dtype=float)
-	image_output = zeros((size[0],size[1]),dtype=float)
+	image_output = zeros((size[0],size[1]),dtype=complex)
 	FFT_image = zeros((size[0],size[1]),dtype=complex)
 	Filtered_FFT = zeros((size[0],size[1]),dtype=complex)
 	Filter = zeros((size[0],size[1]),dtype=float)
 	
-	image_array= odd_sign_change(image_array,size)
-	FFT_image= fftn(image_array)
-	MAX_FREQUENCY = image_array.max()
+	#image_array= odd_sign_change(image_array,size)
+	FFT_image= fftshift(fft2(image_array))
+	#MAX_FREQUENCY = image_array.max()
+	MAX_FREQUENCY = max(size[0],size[1])/2
+
 	print "Maximum Frequency is: "+str(MAX_FREQUENCY)
 	
 	#Default cutoff frequencies
-	Default = 150;
-	Default_Lower = 100;
-	Default_Upper = 175;
+	Default = .707*MAX_FREQUENCY;
+	Default_Lower =  .293*MAX_FREQUENCY;
+	Default_Upper =  .707*MAX_FREQUENCY;
 	
 #Save the output file
 def SaveToFile(output_name):
@@ -76,7 +78,15 @@ def SaveToFile(output_name):
 
 	#convert array from float to uint8 for image display
 	image_output = image_output.astype('uint8')
-
+	
+	arr_min=image_output.min()
+	arr_max=image_output.max()
+	if(arr_min != arr_max):
+		contrast_factor = 255.0/(arr_max-arr_min)
+		for i in range(0,256):
+			for j in range(0,256):
+					image_output[i][j] =contrast_factor*(image_output[i][j]-arr_min)
+			
 	# convert from array to image
 	image_mod=fromarray(image_output);
 	print "Saving the filter applied image to output directory..."
@@ -94,13 +104,13 @@ def LowPass(cutoff_freq):
 	global Filtered_FFT
 	global Filter
 
-	for i in range(0,size[0]-1,1):
-		 for j in range(0,size[1]-1,1):
-		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<cutoff_freq):
+	for i in range(0,size[0],1):
+		 for j in range(0,size[1],1):
+		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<=cutoff_freq):
 					Filtered_FFT[i][j]=FFT_image[i][j]
-	image_output = ifftn(Filtered_FFT)
+	image_output = ifft2(ifftshift(Filtered_FFT)).real
 	
-	image_output = odd_sign_change(image_output,size)							
+	#image_output = odd_sign_change(image_output,size)							
 	image_output = image_output.clip(0,255)							
 	print "\nApplying Low Pass Frequncy Filter  "+"...Done\n"
 	output_name = '_Low_Pass_'+str(cutoff_freq)
@@ -113,13 +123,13 @@ def HighPass(cutoff_freq):
 	global Filtered_FFT
 	global Filter
 
-	for i in range(0,size[0]-1,1):
-		for j in range(0,size[1]-1,1):
-		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))>cutoff_freq):
+	for i in range(0,size[0],1):
+		for j in range(0,size[1],1):
+		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))>=cutoff_freq):
 					Filtered_FFT[i][j]=FFT_image[i][j]
 
-	image_output = ifft2(Filtered_FFT)			
-	image_output = odd_sign_change(image_output,size)
+	image_output = ifft2(ifftshift(Filtered_FFT)).real			
+	#image_output = odd_sign_change(image_output,size)
 	image_output = image_output.clip(0,255)							
 	print "\nApplying High Pass Frequncy Filter   "+"...Done\n"
 	output_name = '_High_Pass_'+str(cutoff_freq)
@@ -132,15 +142,14 @@ def BandPass(cutoff_freq_lower,cutoff_freq_upper):
 	global Filtered_FFT
 	global Filter
 
-	for i in range(0,size[0]-1,1):
-		 for j in range(0,size[1]-1,1):
-	 		if (cutoff_freq_lower<sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<cutoff_freq_upper):
+	for i in range(0,size[0],1):
+		 for j in range(0,size[1],1):
+	 		if (cutoff_freq_lower<=sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))<=cutoff_freq_upper):
 				Filtered_FFT[i][j]=FFT_image[i][j]
 
-	image_output = ifft2(Filtered_FFT)
+	image_output = ifft2(ifftshift(Filtered_FFT)).real
 	
-	image_output = odd_sign_change(image_output,size)
-	
+	#image_output = odd_sign_change(image_output,size)
 	image_output = image_output.clip(0,255)							
 	print "\nApplying Band Pass frequency Filter   "+" ...Done\n"
 	output_name = '_Band_Pass_Lower_'+str(cutoff_freq_lower)+"_Upper_"+str(cutoff_freq_upper)
@@ -163,7 +172,8 @@ def cutoff_freq_input():
 	global cutoff_freq
 	global MAX_FREQUENCY
 	global Default
-	print "here"+str(MAX_FREQUENCY)
+	global Default_Lower
+	global Default_Upper
 	cutoff_freq = raw_input("\nPress Enter for default cutoff frequency fraction [3dB(.707 of maximum)]: "+"\nType cutoff frequency fraction, if not default  : \n" )
 	if(cutoff_freq==""):
 		return Default

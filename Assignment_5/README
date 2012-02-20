@@ -1,0 +1,34 @@
+----------------------------------------README for Assigment 5-----------------------------------
+
+(THERE ARE SAMPLE INPUT AND OUTPUT IN SUBMISSION FOLDER. OUTPUT IMAGE NAME CLEARLY MENTION WHAT OPERATION IS APPLIED ON THEM)
+
+1. To run the program for this assignment go to folder and type following on terminal:
+	for filters:
+		"python frequency_filters.py standard_test_images/[Image_Name]"
+		
+2. You will get 4 options for first part of assingment: (edge detection) 
+	Press 1 to  apply Low Pass Filter to the image: ____[Enter]
+	       Press Enter for default cutoff frequency fraction [3dB(.707 of maximum)]: 
+	       Type cutoff frequency fraction, if not default  :
+	Press 2 to apply High Pass Filter to the image :
+		Press Enter for default cutoff frequency fraction [3dB(.707 of maximum)]: 
+		Type cutoff frequency fraction, if not default  :
+	Press 3 to apply Band Pass to the  image :
+		Press Enter for default cutoff frequency fraction [3dB(.707 of maximum)]: 
+		Type lower cutoff frequency fraction, if not default  :
+													____Enter
+		Type upper cutoff frequency fraction, if not default  : 
+													____Enter
+		Press Enter to exit:							____Enter
+
+3. After saving the image it will show output and ask for rerun the program:
+		Press 'q' to quit  : 
+		Press Enter to run again:                                               ____Enter
+	
+4. go to standard_test_images_Frequency_Filter to see filtered images. In this folder images has extension about what operation is done on them (with paramters)	
+	a. for Low Pass Filter filter: _Low_Pass_[cutoff]
+	b. for High Pass Filter filter: _High_Pass_[cutoff]
+	c. for Band Pass Filter filter: _Band_Pass_Lower_[cutoff_Lower]_Upper_[cutoff_Upper]
+
+			
+For any doubt or query mail at taruny@iitrpr.ac.in
