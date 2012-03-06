@@ -1,0 +1,28 @@
+----------------------------------------README for Assigment 6-----------------------------------
+
+(THERE ARE SAMPLE INPUT AND OUTPUT IN SUBMISSION FOLDER. OUTPUT IMAGE NAME CLEARLY MENTION WHAT OPERATION IS APPLIED ON THEM)
+
+1. To run the program for this assignment go to folder and type following on terminal:
+	for filters:
+		"python segmentation.py standard_test_images/[Image_Name]"
+		
+2. This will run the program and will show the output of segmentation.  5 images shown are as follows:
+	a. Original one:
+	b. Segmented for red spectrum:
+	c. Segmented for green spectrum:
+	d. Segmented for red spectrum:
+	e. Ovelap of b,c and d in edge format using roberts operator:
+3. After saving the image it will show output and ask for rerun the program:
+		Press 'q' to quit  : 
+		Press Enter to run again:                                               ____Enter
+	
+4. go to standard_test_images_Segmented to see segmented images. In this folder images has extension about what operation is done on them (with paramters)	
+	For each images there are 4 images created. Therefor we have created a separate folder for the purpose having extension _Segmented
+	a. for red spectrum segmentation: _Segmented_red
+	b. for green spectrum segmentation: _Segmented_green
+	c. for blue spectrum segmentation: _Segmented_blue
+	d. for overlap of all: _Segmented_rgb
+	e. one more file is created to save the figure shown after running the program but it is not saving it properly so it is empty: _Segmented_all
+
+			
+For any doubt or query mail at taruny@iitrpr.ac.in
