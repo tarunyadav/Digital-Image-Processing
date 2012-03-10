@@ -50,6 +50,7 @@ def robert(image_array):
 			    			
 #Save the output file
 def SaveToFile():
+	global image_array
 	global image_output			
 	global image_output_r
 	global image_output_g
@@ -78,7 +79,7 @@ def SaveToFile():
 		image_mod=fromarray(image_output);
 		print "Saving the segmentation applied image to output directory..."
 		# save the image in destination folder	
-		image_mod.save(file_name[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented.gif')
+		image_mod.save(file_name[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented.gif')
 		print "Segmentation appled  image is saved in output Directory with name: "+ file_name[1].split('.')[0]+'_Segmented.gif   ...Done\n'
 		
 		image_mod.show()
@@ -89,6 +90,7 @@ def SaveToFile():
 		image_output_b_edge = robert(image_output_b)
 		
 		#convert array from float to uint8 for image display
+		image_array = image_array.astype('uint8')
 		image_output_r = image_output_r.astype('uint8')
 		image_output_g = image_output_g.astype('uint8')
 		image_output_b = image_output_b.astype('uint8')
@@ -116,29 +118,30 @@ def SaveToFile():
 		image_mod.save(file_name[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented_rgb.gif')
 		print "Segmentation appled  image is saved in output Directory with name: "+ file_name[1].split('.')[0]+'_Segmented_rgb.gif   ...Done\n'
 		
-		import matplotlib.pyplot as plt
+		import matplotlib.pyplot 
 		plt.subplot(3,2,1)
-		plt.imshow(image)
+		title('Original')
+		plt.imshow(image_array)
 		plt.subplot(3,2,3)
-		plt.imshow(image_mod_r,cmap=plt.cm.gray)
+		title('RED component')
+		plt.imshow(image_output_r,cmap=plt.cm.gray)
 		plt.subplot(3,2,4)
-		plt.imshow(image_mod_g,cmap=plt.cm.gray)
+		title('GREEN component')
+		plt.imshow(image_output_g,cmap=plt.cm.gray)
 		plt.subplot(3,2,5)
-		plt.imshow(image_mod_b,cmap=plt.cm.gray)
+		title('BLUE component')
+		plt.imshow(image_output_b,cmap=plt.cm.gray)
 		plt.subplot(3,2,6)
-		plt.imshow(image_mod,cmap=plt.cm.gray)
+		title('RED +GREEN+BLUE')
+		plt.imshow(image_output,cmap=plt.cm.gray)
 		plt.show()
-		plt.savefig(file_name[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented_all.gif')		
+		savefig(file_name[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented/'+file_name[1].split('.')[0]+'_Segmented_all')		
 
 	
-# Function to get nearest local minimas on each side of given maxima
-#def side_minimas(maxima):
-#	return
-
 #Function to get segments for single spectral image
 #@variable: image array to work with and for local maxima detection and 
 #@return: threshold using iterative thresholding selction algorithm
-def single_spectral_thresholding(image_array,maxima_frac):
+def single_spectral_thresholding(image_array):
 	T_prev=0
 	u_b = (image_array[0][0]+image_array[0][size[1]-1]+image_array[size[0]-1][0]+image_array[size[0]-1][size[1]-1])
 	u_o = (sum(image_array)-u_b)/((size[0]*size[1])-4)
@@ -158,7 +161,7 @@ def single_spectral_thresholding(image_array,maxima_frac):
 	return T		  
 	  		
 #Function to get segments for multispectral image
-def multi_spectral_thresholding(maxima_frac):
+def multi_spectral_thresholding():
 	global image_output_r
 	global image_output_g
 	global image_output_b
@@ -173,9 +176,9 @@ def multi_spectral_thresholding(maxima_frac):
  			image_array_g[i][j]= image_array[i][j][1]
 		 	image_array_b[i][j] = image_array[i][j][2]
 
-	threshold_r = single_spectral_thresholding(image_array_r,maxima_frac)
-	threshold_g = single_spectral_thresholding(image_array_g,maxima_frac)
-	threshold_b = single_spectral_thresholding(image_array_b,maxima_frac)
+	threshold_r = single_spectral_thresholding(image_array_r)
+	threshold_g = single_spectral_thresholding(image_array_g)
+	threshold_b = single_spectral_thresholding(image_array_b)
 	
 	mask_r=(image_array_r>threshold_r)
 	image_output_r[mask_r]=255
@@ -196,26 +199,16 @@ def multi_spectral_thresholding(maxima_frac):
 	print "\nApplying RGB Segmentation to the image   "+"...Done\n"
 	SaveToFile()
 	
-# input for local minima detction and minima verfication offset
-def user_input_fun():
-	maxima_frac = raw_input(" \nType significannt peak fractoin for loacl maxima detection (of maximum-highest peak in histogram): \n")
-
-	# Exit case	
-	if(maxima_frac==""):
-		exit()
-	else:
-		return float(maxima_frac)
 
 #main function which will be run 
 def main():		
 
 	# initialization of all variables and arrays
 	init()
-	# Calling the user input function for type of image
-	#maxima_frac = user_input_fun()
 	maxima_frac=.5
+	#For Gray Scale Image
 	if(image.mode =='L'):
-		threshold= single_spectral_thresholding(image_array,maxima_frac)
+		threshold= single_spectral_thresholding(image_array)
 		mask=(image_array>threshold)
 		image_output[mask]=255
 		mask_neg= -mask
@@ -225,7 +218,7 @@ def main():
 		SaveToFile()
 
 	else:
-		multi_spectral_thresholding(maxima_frac)	
+		multi_spectral_thresholding()	
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")
 	if(rerun==""):
 		main()
