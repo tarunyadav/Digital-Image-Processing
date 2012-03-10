@@ -18,7 +18,7 @@ from numpy import *
 from Image import *
 from pylab import *
 import numpy
-
+import scipy.ndimage.filters as filters
 
 # open the image which is passed in argument
 def init():
@@ -30,7 +30,7 @@ def init():
 	image = image.convert('L')
 	image_array = array(image);
 	size = image_array.shape
-	image_array = array(image_array,dtype=float)
+	image_array = are brightest in their neighborhood (here 10 * 10 pixels)ray(image_array,dtype=float)
 	image_output = zeros((size[0],size[1]),dtype=float)
 	
 	
@@ -72,55 +72,67 @@ def robert():
 #@paramter: steps for theta and r
 #@return: Hough array containg votes in r-theta space
 def Hough_Transformation(edge_image_array,delta_theta,delta_r):
-	global image_array
-	edge_image_flat= edge_image_array.flat 
-	x  = range(0,size[1])
-	y = range(0,size[0])
-	y= repeat(y,size[1])
-	int i=0;
-	while (i<size[0]):
-		x = append(x,x)
-		i++
+#	global image_array
+	
 	thetas = range(-90,90+round(delta_theta),round(delta_theta))
-	sine = sin(thetas*pi/180))
-	cosine = cos(thetas*pi/180)
-	r = transpose(edge_image_flat*x)*cosines + transpose(edge_image_array*y)*sines
-	Hough = zeros((len(thetas),len(r)),dtype=float)
-	for x in thetas:
-			Hough[x][round(r[:][x])] = Hough[x][round(r[:][x])]+1
+	rs = range(0,sqrt(size[0]*size[0]+size[1]*size[1])+delta_r, delta_r )
+	Hough = zeros((len(rs),len(thetas)),dtype=float)
+	
+#	edge_image_flat= edge_image_array.flat 
+#	x  = range(0,size[1])
+#	y = range(0,size[0])
+#	y= repeat(y,size[1])
+#	int i=0;
+#	while (i<size[0]):
+#		x = append(x,x)
+#		i++
+#	thetas = range(-90,90+round(delta_theta),round(delta_theta))
+#	sine = sin(thetas*pi/180))
+#	cosine = cos(thetas*pi/180)
+#	r = transpose(edge_image_flat*x)*cosines + transpose(edge_image_array*y)*sines
+#	Hough = zeros((len(thetas),len(r)),dtype=float)
+#	for x in thetas:
+#			Hough[x][round(r[:][x])] = Hough[x][round(r[:][x])]+1
 
+	for i in range(0,size[0]):
+		for j in range(0,size[1]):
+			if edge_image_array[i][j]==0:
+				continue
+			else:
+				for theta in thetas:
+					r = i*cos(theta*pi/180) + j*sin(theta*pi/180)
+					Hough[r][theta]++;
 	return Hough
 			    		
 #Function to detect local maximas in given r-theta space array
 #@paramter:Hough array with votes for r-theta space
-#@return : points of maximas in r-theta space
-def Maxima_Detection(Hough):
-	global image_output
-	global FFT_image
-	global Filtered_FFT
-	global Filter
+#@return : points of maximas in r-theta space, bool r-theta space matrix where all local maximas are true
+def Maxima_Detection(Hough,neighborhood):
+	
+	maximas = filters.maximun_filters(Hough,5)
+	local_maximas = (Hough==maximas)
+	
+	return local_maximas
 
-	for i in range(0,size[0],1):
-		for j in range(0,size[1],1):
-		 		if (sqrt((i-size[0]/2)*(i-size[0]/2)+(j-size[1]/2)*(j-size[1]/2))>=cutoff_freq):
-					Filtered_FFT[i][j]=FFT_image[i][j]
-
-	image_output = ifft2(ifftshift(Filtered_FFT)).real			
-	#image_output = odd_sign_change(image_output,size)
-	image_output = image_output.clip(0,255)							
-	print "\nApplying High Pass Frequncy Filter   "+"...Done\n"
-	output_name = '_High_Pass_'+str(cutoff_freq)
-	SaveToFile(output_name)
-
+#Function to draw the straigt lines of maxima on the image
+#@parameter: matrix of r-theta space where all local maximas are true
+#@return: No return just draw all the straight lines got from hough transformations
+def Draw(maximas):
+	maximas_size = maximas.shape
+	for r in range(0,maximas_size[0]):
+		for theta in range(0,maximas_size[1]):
+			if (maximas[r][theta] == TRUE):
+				
 # input for steps of theta and r for r-theta space
 def user_input_fun():
 	delta_theta = raw_input("\n Type step theta (delta theta) for r-theta space : \n")
 	delta_r = raw_input("\n Type step r (delta r) for r-theta space : \n")
+	neighborhood = raw_input("\n Type neighborhood size for local maxima detection for r-theta space : \n")
 	# Exit case	
-	if(delta_theta=="" or delta_theta==""):
+	if(delta_theta=="" or delta_theta=="" or neighborhood==""):
 		exit()
 	else:
-		return float(delta_theta),float(delta_r)
+		return float(delta_theta),float(delta_r),neighborhood
 
 		
 #main function which will be run 
@@ -129,14 +141,15 @@ def main():
 	# initialization of all variables and arrays
 	init()
 	# Calling the user input function for type of image
-	(delta_theta,delta_r) = user_input_fun()
+	(delta_theta,delta_r,neighborhood) = user_input_fun()
 	edge_image_array = roberts()
 	Hough = Hough_Transformation(edge_image_array,delta_theta,delta_r)
-	maximas = Maxima_Detection(Hough)
+	maximas = Maxima_Detection(Hough,neighborhood)
 	Draw(maximas);	
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")
 	if(rerun==""):
 		main()
 		
 main()
+	
 	
