@@ -4,7 +4,7 @@
  #          Last Modified: March 10, 2012
  #          Topic: Hough transformation for finding straight line
  #          Instructor: Dr. Anil Seth
- # ----------------------------------------------------------------
+ # -----------------------------------------------------------------------------------------------------------------------------------
  #
  #          Script to apply hough transformation and finding straight line with local maxima approach
  #          Image Dimensions (WxH) - width(column) x height(row)
@@ -58,6 +58,7 @@ def SaveToFile(output_name):
 	#image.show()
 	image_mod.show()
 	
+#Function to roberts operator for edge detection	
 def robert():
 	global image_array
 	image_arr = zeros((size[0],size[1]),dtype=float)
@@ -118,10 +119,33 @@ def Maxima_Detection(Hough,neighborhood):
 #@parameter: matrix of r-theta space where all local maximas are true
 #@return: No return just draw all the straight lines got from hough transformations
 def Draw(maximas):
+	global image
+	global image_output
+	
 	maximas_size = maximas.shape
+	draw = ImageDraw.Draw(image)
+	start_x=0;start_y=0
+	end_x=0;end_y=0
 	for r in range(0,maximas_size[0]):
 		for theta in range(0,maximas_size[1]):
 			if (maximas[r][theta] == TRUE):
+				if ((r/sin(theta)>size[0]-1):
+					start_y = size[0]-1
+					start_x = r-(start_y*sin(theta))
+				else:
+					start_y = r/sin(theta)
+					start_x = 0
+				if ((r/cos(theta)>size[1]-1):
+					end_x = size[1]-1
+					end_y = r-(start_x*cos(theta))
+				else:
+					end_x = r/cos(theta)
+					end_y = 0
+				draw.line([(start_x,start_y),(end_x,end_y)])
+	image_output = array(image)
+	print "\nApplying Hough Transformation   "+"...Done\n"
+	output_name = '_hough_transformation_'
+	SaveToFile(output_name)
 				
 # input for steps of theta and r for r-theta space
 def user_input_fun():
