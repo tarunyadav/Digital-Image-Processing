@@ -1,0 +1,20 @@
+----------------------------------------README for Assigment 7-----------------------------------
+
+(THERE ARE SAMPLE INPUT AND OUTPUT IN SUBMISSION FOLDER. OUTPUT IMAGE NAME CLEARLY MENTION WHAT OPERATION IS APPLIED ON THEM)
+
+1. To run the program for this assignment go to folder and type following on terminal:
+	for filters:
+		"python hough_transformation.py standard_test_images/[Image_Name]"
+		
+2. This will run the program and will show the output of hough transformation. Two options for steps of theta and r will be taken as input:
+	a. Type step theta (delta theta) for r-theta space : 
+	b. Type step r (delta r) for r-theta space : 
+3. After saving the image it will show output and ask for rerun the program:
+		Press 'q' to quit  : 
+		Press Enter to run again:                                               ____Enter
+	
+4. go to standard_test_images_Hough_Transformed to see segmented images. In this folder images has extension about what operation is done on them (with paramters)	
+	For each images there is a image created. 
+	a. extension for file is _hough_transformed
+			
+For any doubt or query mail at taruny@iitrpr.ac.in
