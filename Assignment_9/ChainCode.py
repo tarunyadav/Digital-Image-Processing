@@ -35,7 +35,6 @@ def init(gaussian_smoothing):
 	image = open(sys.argv[1])
 	image = image.convert('L')
 	
-	#image.show()
 	#image=image.filter(BLUR)
 	image_array = array(image)
 	size = image_array.shape
@@ -49,7 +48,8 @@ def init(gaussian_smoothing):
 	seed_array = zeros((size[0],size[1]),dtype=float)
 	#to keep count for region no.
 	region_no=1
-	
+	#image1 = fromarray(image_array)
+	#image1.show()	
 #Save the output file
 def SaveToFile(output_name,t_init,region_no):
 	global image_output			
@@ -82,6 +82,7 @@ def SaveToFile(output_name,t_init,region_no):
 	import matplotlib.pyplot as plt
 	plt.imshow(image_output)
 	plt.show()
+	
 	#image_mod.show()
 	
 
@@ -169,11 +170,16 @@ def boundary_pixels(i_init,j_init,i,j,v,current_region):
 def boundary_detection():
 	global region_array
 	global region_no
-	regions = zeros(region_no,dtype=int)
+	global size
+	regions = zeros(region_no+1,dtype=int)
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
-			if(region_array[i][j]!=0 and regions[region_array[i][j]]==0):	
-				regions[region_array[i][j]]==1
+		 	#print i,j
+		 	#print region_array[i][j]
+			if(region_array[i][j]!=0 and region_array[i][j]!=255 and regions[region_array[i][j]]==0 ):	
+				
+				#print region_array[i][j]
+				regions[region_array[i][j]]=1
 				#(new_i,new_j,new_v)= boundary_pixels(i,j,v,region_array[i][j])
 				#while(((new_i==i and new_j==j) or new_i<0 or new_i>255 or new_j<0 or new_j>255)==False):
 				new_i=i
@@ -185,6 +191,7 @@ def boundary_detection():
 							(new_i,new_j,new_v)=boundary_pixels(i,j,new_i,new_j,new_v,current_region)							
 							if(new_v==5):
 								break;
+	
 #Function to initiate region going through seed points
 #@parameters: tolerance value, seed_array is global so need for this parameter
 #@return: calculate regions and save in ouput folder
@@ -208,6 +215,7 @@ def region_detection(tolerance,gaussian_smoothing,t_init):
 							region_array[mask]=0;
 				else:
 							region_no=region_no+1
+	region_no=region_no-1
 	boundary_detection()		
 	image_output=region_array
 	#image_output=filters.gaussian_filter(image_output,3)	
