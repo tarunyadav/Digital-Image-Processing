@@ -154,6 +154,7 @@ def user_input_fun():
 	delta_theta = raw_input("\n Type step theta (delta theta) for r-theta space : \n")
 	delta_r = raw_input("\n Type step r (delta r) for r-theta space : \n")
 	neighborhood = raw_input("\n Type neighborhood size for local maxima detection for r-theta space : \n")
+	#neighborhood = 5
 	# Exit case	
 	if(delta_theta=="" or delta_theta=="" or neighborhood==""):
 		exit()
@@ -166,11 +167,13 @@ def main():
 
 	# initialization of all variables and arrays
 	init()
+	global image_output
 	# Calling the user input function for type of image
 	(delta_theta,delta_r,neighborhood) = user_input_fun()
 	edge_image_array = roberts()
 	Hough = Hough_Transformation(edge_image_array,delta_theta,delta_r)
 	print "\nApplying Hough Transformation   "+"...Done\n"
+	image_output = Hough
 	output_name = '_hough_transformation_'
 	SaveToFile(output_name)
 	
@@ -181,20 +184,4 @@ def main():
 		main()
 		
 main()
-	
-#	edge_image_flat= edge_image_array.flat 
-#	x  = range(0,size[1])
-#	y = range(0,size[0])
-#	y= repeat(y,size[1])
-#	int i=0;
-#	while (i<size[0]):
-#		x = append(x,x)
-#		i++
-#	thetas = range(0,180+round(delta_theta),round(delta_theta))
-#	sine = sin(thetas*pi/180))
-#	cosine = cos(thetas*pi/180)
-#	r = transpose(edge_image_flat*x)*cosines + transpose(edge_image_array*y)*sines
-#	Hough = zeros((len(thetas),len(r)),dtype=float)
-#	for x in thetas:
-#			Hough[x][round(r[:][x])] = Hough[x][round(r[:][x])]+1
 
