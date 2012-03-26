@@ -1,7 +1,7 @@
 ## 
  #          File: region_growing.py
  #          Author: Tarun Yadav
- #          Last Modified: March 25, 2012
+ #          Last Modified: March 26, 2012
  #          Topic: Find chain code and its gradient for regions in a gray scale image(converted to binary)
  #          Instructor: Dr. Anil Seth
  # ----------------------------------------------------------------
@@ -21,7 +21,9 @@ import numpy
 from ImageFilter import *
 import scipy.ndimage.filters as filters
 from time import *
-sys.setrecursionlimit(1500)
+import re
+import string
+sys.setrecursionlimit(2000)
 # open the image which is passed in argument
 def init(gaussian_smoothing):
 	global image
@@ -31,8 +33,7 @@ def init(gaussian_smoothing):
 	global region_array
 	global seed_array
 	global region_no
-	global chain_codes
-	
+
 	image = open(sys.argv[1])
 	image = image.convert('L')
 	
@@ -146,10 +147,10 @@ def  grow_the_region(current_nbh,tolerance,total_intensity,number):
 	grow_the_region(current_nbh,tolerance,total_intensity,number)
 	
 
-def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count):
+def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count,chain_codes):
 	global region_array
 	global size
-	global chain_codes
+
 	i_old=i
 	j_old=j
 	if(v==0):
@@ -173,13 +174,12 @@ def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count):
 		return (i,j,mod(v+3,4),0)
 
 	
-def boundary_detection():
+def boundary_detection(region_no):
 	global region_array
-	global region_no
 	global size
-	global chain_codes
 	
 	chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
+	chain_codes[0]='000112300011002300011001122'
 	regions = zeros(region_no+1,dtype=int)
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
@@ -194,22 +194,50 @@ def boundary_detection():
 				dir_count=1
 				chain_codes[current_region]=str(new_v)
 				while(True):
-							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count)
+							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count,chain_codes)
 							
 							if(dir_count==5):
 								break									
 							if(new_v==5):
 								break
-	#print chain_codes
-	#for i in range(0,region_no+1):
-	#	print len(chain_codes[i])
+	return chain_codes
 	
-def chain_code_normalization():
-		global chain_codes
-		global region_no
-		for i in range(1,region_no+1):
+def chain_code_normalization(chain_codes,region_no):
+		global size
+		normalized_chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
+		for i in range(0,region_no+1):
 			chain_code = chain_codes[i]
+			max_prev=0
+			search_str=''
+			final_chain_code = chain_code+chain_code
+			for j in range(0,4):
+				for k in range(0,j+1):
+					max_substr=0
+					substrings=re.compile("("+search_str+str(k)+"*)").findall(final_chain_code)
+					if(len(substrings)==0):
+						max_substr=0
+					else:
+						max_substr=len(max(substrings))
+					search_str= search_str + (max_substr-max_prev)*str(k)	
+					if (max_substr!=0):
+						max_prev = max_substr;
+				
+			min_chain_code_index = string.find(final_chain_code,search_str)
+			normalized_chain_codes[i]= final_chain_code[min_chain_code_index: min_chain_code_index+len(chain_code)]
 			
+		#print normalized_chain_codes
+		return normalized_chain_codes
+
+def chain_code_derivatives(normalized_chain_codes,region_no):
+	global size
+	derivated_chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
+	for i in range(0,region_no+1):
+			chain_code = normalized_chain_codes[i];
+			derivated_chain_code=''
+			for j in range(0,len(chain_code)-1):
+					derivated_chain_code=derivated_chain_code+ str(mod(int(chain_code[j])-int(chain_code[j+1]),4))
+			derivated_chain_codes[i]=derivated_chain_code
+	return derivated_chain_codes
 		
 #Function to initiate region going through seed points
 #@parameters: tolerance value, seed_array is global so need for this parameter
@@ -220,7 +248,7 @@ def region_detection(tolerance,gaussian_smoothing,t_init):
 	global image_output
 	global size
 	global region_no
-
+	print "Applying region growing to the image   "+" .........."
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
 			if(seed_array[i][j]==1):
@@ -236,12 +264,16 @@ def region_detection(tolerance,gaussian_smoothing,t_init):
 							region_no=region_no+1
 	print "Applying region growing to the image   "+" ...Done"
 	region_no=region_no-1
-	boundary_detection()		
+	print "Applying Boundary Detection to the image and finding chain codes  "+" ............"
+	chain_codes=boundary_detection(region_no)		
 	print "Applying Boundary Detection to the image and finding chain codes  "+" ...Done"
-	chain_code_normalization()
-	print "Normalizing the chain codes "+" ...Done"
+	print "Applying Chain Code Normalization to all chain codes  "+" ..........."
+	normalized_chain_codes=chain_code_normalization(chain_codes,region_no)
+	print "Applying Chain Code Normalization to all chain codes  "+" ...Done"
+	print "Creating Chain Code Derivates for all chain codes  "+" ..........."
+	derivated_chain_codes=chain_code_derivatives(normalized_chain_codes,region_no)
+	print "Creating Chain Code Derivates for all chain codes  "+" ...Done"
 	image_output=region_array
-	#image_output=filters.gaussian_filter(image_output,3)	
 	image_output = image_output.clip(0,255)	
 	output_name = '_tolerance_'+str(tolerance)
 	if (gaussian_smoothing==1):
