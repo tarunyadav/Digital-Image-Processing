@@ -31,6 +31,7 @@ def init(gaussian_smoothing):
 	global region_array
 	global seed_array
 	global region_no
+	global chain_codes
 	
 	image = open(sys.argv[1])
 	image = image.convert('L')
@@ -39,7 +40,7 @@ def init(gaussian_smoothing):
 	image_array = array(image)
 	size = image_array.shape
 	if(gaussian_smoothing ==1):
-		image_array=filters.gaussian_filter(image_array,3)	
+		image_array=filters.gaussian_filter(image_array,5)	
 	image_array = array(image_array,dtype=float)
 	image_output = zeros((size[0],size[1]),dtype=float)
 	#region_array to mark region # in for each pixel
@@ -58,11 +59,11 @@ def SaveToFile(output_name,t_init,region_no):
 	
 	file_name= sys.argv[1].split('/')
 	# check if output directory exists or not. if doesn't exists then create it
-	if (os.path.exists(os.path.dirname(file_name[0]+'_region_growing/'))==False):
-	    print "\nCreating Directory "+file_name[0]+"_region_growing ... Done"
-	    os.mkdir(file_name[0]+'_region_growing',0777) 
+	if (os.path.exists(os.path.dirname(file_name[0]+'_region_boundary/'))==False):
+	    print "\nCreating Directory "+file_name[0]+"_region_boundary ... Done"
+	    os.mkdir(file_name[0]+'_region_boundary',0777) 
 	else:
-	    print "\nOutput Directory "+file_name[0]+"_region_growing already exist... Done"		
+	    print "\nOutput Directory "+file_name[0]+"_region_boundary already exist... Done"		
 
 	#convert array from float to uint8 for image display
 	image_output = image_output.astype('uint8')
@@ -70,10 +71,10 @@ def SaveToFile(output_name,t_init,region_no):
 				
 	# convert from array to image
 	image_mod=fromarray(image_output);
-	print "Saving the region growing applied image to output directory..."
+	print "Saving the region growing and boundary applied image to output directory..."
 	output_name = output_name + '_total_regions_'+str(region_no)+'_time_taken_' + str(t_end-t_init)+'_sec'
 	# save the image in destination folder	
-	image_mod.save(file_name[0]+'_region_growing/'+file_name[1].split('.')[0]+output_name+'.gif')
+	image_mod.save(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Output image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif   ...Done\n'
 	print "----------------------------------------------------------------------------------------------------------------"
 	print ("\nTotal no. of regions are  : "+ str(region_no))	
@@ -145,8 +146,10 @@ def  grow_the_region(current_nbh,tolerance,total_intensity,number):
 	grow_the_region(current_nbh,tolerance,total_intensity,number)
 	
 
-def boundary_pixels(i_init,j_init,i,j,v,current_region):
+def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count):
 	global region_array
+	global size
+	global chain_codes
 	i_old=i
 	j_old=j
 	if(v==0):
@@ -158,40 +161,52 @@ def boundary_pixels(i_init,j_init,i,j,v,current_region):
 	elif (v==3):
 		i=i+1
 		
-	if ((i==i_init and j==j_init) or i<0 or i>255 or j<0 or j>255):
-		return (0,0,5)
+	if (i==i_init and j==j_init) :
+		return (0,0,5,0)
+
+	if ( i<0 or i>size[0]-1 or j<0 or j>size[1]-1 or region_array[i][j]!=current_region):
+		return (i_old,j_old,mod(v+1,4),dir_count+1)		
 		
-	if(region_array[i][j]==current_region):
+	elif(region_array[i][j]==current_region):
 		region_array[i][j]=255
-		return (i,j,mod(v+3,4))
-	else:
-		return (i_old,j_old,mod(v+1,4))
+		chain_codes[current_region]=chain_codes[current_region]+str(v)
+		return (i,j,mod(v+3,4),0)
+
 	
 def boundary_detection():
 	global region_array
 	global region_no
 	global size
+	global chain_codes
+	
+	chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
 	regions = zeros(region_no+1,dtype=int)
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
-		 	#print i,j
-		 	#print region_array[i][j]
+
 			if(region_array[i][j]!=0 and region_array[i][j]!=255 and regions[region_array[i][j]]==0 ):	
-				
-				#print region_array[i][j]
 				regions[region_array[i][j]]=1
-				#(new_i,new_j,new_v)= boundary_pixels(i,j,v,region_array[i][j])
-				#while(((new_i==i and new_j==j) or new_i<0 or new_i>255 or new_j<0 or new_j>255)==False):
 				new_i=i
 				new_j=j
 				new_v=3
 				current_region = region_array[i][j]
 				region_array[i][j]=255
+				dir_count=1
+				chain_codes[current_region]=str(new_v)
 				while(True):
-							(new_i,new_j,new_v)=boundary_pixels(i,j,new_i,new_j,new_v,current_region)							
+							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count)
+							
+							if(dir_count==5):
+								break									
 							if(new_v==5):
-								break;
+								break
+	#print chain_codes
+	#for i in range(0,region_no+1):
+	#	print len(chain_codes[i])
 	
+def chain_code_normalization():
+		global chain_codes
+		
 #Function to initiate region going through seed points
 #@parameters: tolerance value, seed_array is global so need for this parameter
 #@return: calculate regions and save in ouput folder
@@ -215,12 +230,15 @@ def region_detection(tolerance,gaussian_smoothing,t_init):
 							region_array[mask]=0;
 				else:
 							region_no=region_no+1
+	print "Applying region growing to the image   "+" ...Done"
 	region_no=region_no-1
 	boundary_detection()		
+	print "Applying Boundary Detection to the image and finding chain codes  "+" ...Done"
+	chain_code_normalization()
+	print "Normalizing the chain codes "+" ...Done"
 	image_output=region_array
 	#image_output=filters.gaussian_filter(image_output,3)	
 	image_output = image_output.clip(0,255)	
-	print "Applying region growing to the image   "+" ...Done"
 	output_name = '_tolerance_'+str(tolerance)
 	if (gaussian_smoothing==1):
 		output_name = '_gaussian_smoothing_'+'_tolerance_'+str(tolerance)
