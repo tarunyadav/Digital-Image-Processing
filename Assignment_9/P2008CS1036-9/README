@@ -1,0 +1,34 @@
+----------------------------------------README for Assigment 9-----------------------------------
+
+(THERE ARE SAMPLE INPUT AND OUTPUT IN SUBMISSION FOLDER. OUTPUT IMAGE NAME CLEARLY MENTION WHAT OPERATION IS APPLIED ON THEM)
+
+1. To run the program for this assignment go to folder and type following on terminal:
+	for filters:
+		"python ChainCode.py standard_test_images/[Image_Name]"
+		
+2. You will get 3 options as an input to the program: 
+
+	Press 4 for 4-neighbor approach or 8 for 8-neighbor approach[Default 8(Press Enter)]: _____[Enter]
+	
+	 Want to apply gaussian smoothing, type 1 for yes or 0 for no[Default NO(press Enter)]:  ____[Enter]
+	  
+	 Type tolerance for region sperating intensity(int) criteria[press Enter for Default (Default is 10)]:   ____[Enter]
+	
+	  
+3. After saving the image it will show output of detected boundaries and ask for rerun the program:
+		Press 'q' to quit  : 
+		Press Enter to run again:                                               ____Enter
+	
+4. go to standard_test_images_region_boundary  to see output images and chain codes. In this folder images has extension about what operation is done on them (with paramters)	
+	e.g.  image_neighbor_8_gaussian_smoothing_tolerance_10.0_total_regions_1484_time_taken_3.23228907585_sec.gif
+	a. 4/8 neighbor approach is shown 
+	b. if gaussian smoothing is applied then it shows gaussain smoothing
+	c. show the tolerance value
+	d. show the no. of regions detected
+	e. show time taken to run the program
+	
+	chain codes are written and similar .txt extension files.
+	a. firstly normalized chain codes are written for all the regions
+	b. secondly derivated chain codes are written for all the regions for normalized one
+			
+For any doubt or query mail at taruny@iitrpr.ac.in

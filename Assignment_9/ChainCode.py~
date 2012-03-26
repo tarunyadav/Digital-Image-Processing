@@ -81,6 +81,7 @@ def SaveToFile(output_name,t_init,region_no,normalized_chain_codes,derivated_cha
 	fd= os.open(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.txt',os.O_RDWR|os.O_CREAT )
 	os.write(fd,'Normalized Chain Codes: \n')
 	os.write(fd,str(normalized_chain_codes))
+	os.write(fd,str('\n\n'))
 	os.write(fd,'Derivated Chain Codes: \n')
 	os.write(fd,str(derivated_chain_codes))
 	os.close(fd)
