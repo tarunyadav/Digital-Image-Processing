@@ -52,8 +52,9 @@ def init(gaussian_smoothing):
 	region_no=1
 	#image1 = fromarray(image_array)
 	#image1.show()	
+	
 #Save the output file
-def SaveToFile(output_name,t_init,region_no):
+def SaveToFile(output_name,t_init,region_no,normalized_chain_codes,derivated_chain_codes):
 	global image_output			
 	
 	t_end = time()
@@ -68,8 +69,7 @@ def SaveToFile(output_name,t_init,region_no):
 
 	#convert array from float to uint8 for image display
 	image_output = image_output.astype('uint8')
-	
-				
+					
 	# convert from array to image
 	image_mod=fromarray(image_output);
 	print "Saving the region growing and boundary applied image to output directory..."
@@ -77,6 +77,13 @@ def SaveToFile(output_name,t_init,region_no):
 	# save the image in destination folder	
 	image_mod.save(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Output image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif   ...Done\n'
+	
+	fd= os.open(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.txt',os.O_RDWR|os.O_CREAT )
+	os.write(fd,'Normalized Chain Codes: \n')
+	os.write(fd,str(normalized_chain_codes))
+	os.write(fd,'Derivated Chain Codes: \n')
+	os.write(fd,str(derivated_chain_codes))
+	os.close(fd)
 	print "----------------------------------------------------------------------------------------------------------------"
 	print ("\nTotal no. of regions are  : "+ str(region_no))	
 	print ("\nTotal time taken to run the Pogram is : "+str(t_end-t_init)+" seconds")
@@ -87,7 +94,6 @@ def SaveToFile(output_name,t_init,region_no):
 	
 	#image_mod.show()
 	
-
 #Function to get seed points for the image
 #@parameters: array having 0 at all indices
 #@return: array having 1 at seed point indices
@@ -146,63 +152,90 @@ def  grow_the_region(current_nbh,tolerance,total_intensity,number):
 				 	current_nbh.insert(0,(m,n))
 	grow_the_region(current_nbh,tolerance,total_intensity,number)
 	
-
-def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count,chain_codes):
+##Function to find new direction vector for the pixel and mark this pixel as boundary
+#@parameter: starting coordinates, current coordinates, current region number, array of chain code, 4/8 neighbor approach
+#@return: current pixels and new directon vector
+def boundary_pixels(i_init,j_init,i,j,v,current_region,dir_count,chain_codes,neighbors):
 	global region_array
 	global size
-
 	i_old=i
 	j_old=j
-	if(v==0):
-		j=j+1
-	elif (v==1):
-		i=i-1
-	elif(v==2):
-		j=j-1
-	elif (v==3):
-		i=i+1
-		
-	if (i==i_init and j==j_init) :
-		return (0,0,5,0)
-
-	if ( i<0 or i>size[0]-1 or j<0 or j>size[1]-1 or region_array[i][j]!=current_region):
-		return (i_old,j_old,mod(v+1,4),dir_count+1)		
-		
+	if (neighbors==4):
+		if(v==0 ):
+			j=j+1
+		elif (v==1):
+			i=i-1
+		elif(v==2):
+			j=j-1
+		elif (v==3):
+			i=i+1
+	else:
+		if(v==0 or  v==1 or v==7 ):
+			j=j+1
+		if (v==1 or v==2 or v==3):
+			i=i-1
+		if(v==3 or v==4 or v==5):
+			j=j-1
+		if (v==5 or v==6 or v==7):
+			i=i+1
+	#stop condition when region loop is complete
+	if(i==i_init and j==j_init):	
+		if (neighbors==4):
+			return (0,0,4,0)
+		else:
+			return (0,0,8,0)
+	# condition when pixel doesn't belong to same region then change the direction vector
+	elif ( i<0 or i>size[0]-1 or j<0 or j>size[1]-1 or region_array[i][j]!=current_region):
+			return (i_old,j_old,mod(v+1,neighbors),dir_count+1)		
+			
+	#mark the pixel as boundary and find new direction vector(4/8 neighbor)	
 	elif(region_array[i][j]==current_region):
 		region_array[i][j]=255
 		chain_codes[current_region]=chain_codes[current_region]+str(v)
-		return (i,j,mod(v+3,4),0)
+		if(neighbors==4):
+			return (i,j,mod(v+3,4),0)
+		else:
+			if(mod(v,2)==0):
+				return (i,j,mod(v+7,8),0)
+			else:
+				return (i,j,mod(v+6,8),0)
 
-	
-def boundary_detection(region_no):
+##Function to detect boundary of all regions
+#@parameter: number of total regions and 4/8 neighbor approach
+#@return: chain codes having direction vector
+def boundary_detection(region_no,neighbors):
 	global region_array
 	global size
 	
 	chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
 	chain_codes[0]='000112300011002300011001122'
 	regions = zeros(region_no+1,dtype=int)
+	
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
-
+		 	# For a new region start from here
 			if(region_array[i][j]!=0 and region_array[i][j]!=255 and regions[region_array[i][j]]==0 ):	
 				regions[region_array[i][j]]=1
 				new_i=i
 				new_j=j
-				new_v=3
+				new_v=neighbors-2
 				current_region = region_array[i][j]
 				region_array[i][j]=255
 				dir_count=1
-				chain_codes[current_region]=str(new_v)
 				while(True):
-							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count,chain_codes)
+							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count,chain_codes,neighbors)
 							
-							if(dir_count==5):
+							if((dir_count==5 and neighbors==4) or (dir_count==9 and neighbors==8)):
 								break									
-							if(new_v==5):
+							if((new_v==4 and neighbors==4) or (new_v==8 and neighbors==8) ):
 								break
+				
 	return chain_codes
-	
-def chain_code_normalization(chain_codes,region_no):
+
+##Function to normalize all the chain codes
+#@parameter: array of chain codes for all regions,number of total regions and 4/8 neighbor approach
+#@return: normalized(min. integer value) chain codes having direction vector	
+def chain_code_normalization(chain_codes,region_no,neighbors):
 		global size
 		normalized_chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
 		for i in range(0,region_no+1):
@@ -210,7 +243,7 @@ def chain_code_normalization(chain_codes,region_no):
 			max_prev=0
 			search_str=''
 			final_chain_code = chain_code+chain_code
-			for j in range(0,4):
+			for j in range(0,neighbors):
 				for k in range(0,j+1):
 					max_substr=0
 					substrings=re.compile("("+search_str+str(k)+"*)").findall(final_chain_code)
@@ -224,25 +257,30 @@ def chain_code_normalization(chain_codes,region_no):
 				
 			min_chain_code_index = string.find(final_chain_code,search_str)
 			normalized_chain_codes[i]= final_chain_code[min_chain_code_index: min_chain_code_index+len(chain_code)]
-			
-		#print normalized_chain_codes
 		return normalized_chain_codes
 
-def chain_code_derivatives(normalized_chain_codes,region_no):
+##Function to find derivatives of all normalized chain codes
+#@parameter: array of normalized chain codes for all regions,number of total regions and 4/8 neighbor approach
+#@return: derivated chain codes having direction vector	
+def chain_code_derivatives(normalized_chain_codes,region_no,neighbors):
 	global size
 	derivated_chain_codes=zeros(region_no+1,dtype=(str,size[0]*size[1]/10))
 	for i in range(0,region_no+1):
 			chain_code = normalized_chain_codes[i];
 			derivated_chain_code=''
 			for j in range(0,len(chain_code)-1):
-					derivated_chain_code=derivated_chain_code+ str(mod(int(chain_code[j])-int(chain_code[j+1]),4))
+					derivated_chain_code=derivated_chain_code+ str(mod(int(chain_code[j])-int(chain_code[j+1]),neighbors))
+					
+			derivated_chain_code=derivated_chain_code+ str(mod(int(chain_code[len(chain_code)-1])-int(chain_code[0]),neighbors))
+							
 			derivated_chain_codes[i]=derivated_chain_code
+			
 	return derivated_chain_codes
 		
 #Function to initiate region going through seed points
 #@parameters: tolerance value, seed_array is global so need for this parameter
 #@return: calculate regions and save in ouput folder
-def region_detection(tolerance,gaussian_smoothing,t_init):
+def region_detection(tolerance,gaussian_smoothing,t_init,neighbors):
 	global region_array
 	global seed_array
 	global image_output
@@ -262,51 +300,57 @@ def region_detection(tolerance,gaussian_smoothing,t_init):
 							region_array[mask]=0;
 				else:
 							region_no=region_no+1
+
 	print "Applying region growing to the image   "+" ...Done"
 	region_no=region_no-1
+	#Boundary detection
 	print "Applying Boundary Detection to the image and finding chain codes  "+" ............"
-	chain_codes=boundary_detection(region_no)		
-	print "Applying Boundary Detection to the image and finding chain codes  "+" ...Done"
+	chain_codes=boundary_detection(region_no,neighbors)		
+	print "Applying Boundary Detection to the image and finding chain codes  "+" .....Done"
+	#normalized chain codes
 	print "Applying Chain Code Normalization to all chain codes  "+" ..........."
-	normalized_chain_codes=chain_code_normalization(chain_codes,region_no)
-	print "Applying Chain Code Normalization to all chain codes  "+" ...Done"
+	normalized_chain_codes=chain_code_normalization(chain_codes,region_no,neighbors)
+	print "Applying Chain Code Normalization to all chain codes  "+" ......Done"
+	# derivated chain codes
 	print "Creating Chain Code Derivates for all chain codes  "+" ..........."
-	derivated_chain_codes=chain_code_derivatives(normalized_chain_codes,region_no)
-	print "Creating Chain Code Derivates for all chain codes  "+" ...Done"
+	derivated_chain_codes=chain_code_derivatives(normalized_chain_codes,region_no,neighbors)
+	print "Creating Chain Code Derivates for all chain codes  "+" ......Done"
+	
 	image_output=region_array
 	image_output = image_output.clip(0,255)	
-	output_name = '_tolerance_'+str(tolerance)
+	output_name = '_neighbors_'+str(neighbors)+'_tolerance_'+str(tolerance)
 	if (gaussian_smoothing==1):
 		output_name = '_gaussian_smoothing_'+'_tolerance_'+str(tolerance)
 	
-	SaveToFile(output_name,t_init,region_no)	
+	SaveToFile(output_name,t_init,region_no,normalized_chain_codes,derivated_chain_codes)	
 	
 
-# input for maximum region showing and tolerance value
+# input for neighbor approach, gaussian smoothing and tolerance value for region detection
 def user_input_fun():
-	gaussian_smoothing = raw_input("\n Want to apply gaussian smoothing, type 1 for yes or 0 for no[Default YES(press Enter)]:  \n")
-	#max_regions = raw_input("\n Type maximum no. of significant regions(int), you want to see [press Enter for default(all regions)]: \n")
+	neighbors = raw_input("\n Press 4 for 4-neighbor approach or 8 for 8-neighbor approach[Default 8(Press Enter)]:  \n")
+	gaussian_smoothing = raw_input("\n Want to apply gaussian smoothing, type 1 for yes or 0 for no[Default NO(press Enter)]:  \n")
 	tolerance = raw_input("\n Type tolerance for region sperating intensity(int) criteria[press Enter for Default (Default is 10)]: \n")
+	if(neighbors==""):
+		neighbors=8
 	if (tolerance==""):
 		tolerance=10
 	if(gaussian_smoothing=="" ):
-		gaussian_smoothing = 1
+		gaussian_smoothing = 0
 			
-	return float(gaussian_smoothing ),float(tolerance)
+	return float(gaussian_smoothing ),float(tolerance),int(neighbors)
 			
 
 #main function which will be run 
 def main():		
 	t_init= time()
 	# Calling the user input function to get maximum no. of regions and tolerance
-	(gaussian_smoothing,tolerance) = user_input_fun()
+	(gaussian_smoothing,tolerance,neighbors) = user_input_fun()
 	# initialization of all variables and arrays
 	init(gaussian_smoothing)
 	#calculation of seed points 
 	calculate_seed_points()
 	# call to region growing
-	region_detection(tolerance,gaussian_smoothing,t_init)
-	
+	region_detection(tolerance,gaussian_smoothing,t_init,neighbors)
 	# in case to rerun the program		
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")
 	if(rerun==""):
