@@ -54,43 +54,44 @@ def init(gaussian_smoothing):
 	#image1.show()	
 	
 #Save the output file
-def SaveToFile(output_name,t_init,region_no,normalized_chain_codes,derivated_chain_codes):
+def SaveToFile(output_name,t_init,region_no):
 	global image_output			
-	
+	global region_array
 	t_end = time()
 	
 	file_name= sys.argv[1].split('/')
 	# check if output directory exists or not. if doesn't exists then create it
-	if (os.path.exists(os.path.dirname(file_name[0]+'_region_boundary/'))==False):
-	    print "\nCreating Directory "+file_name[0]+"_region_boundary ... Done"
-	    os.mkdir(file_name[0]+'_region_boundary',0777) 
+	if (os.path.exists(os.path.dirname(file_name[0]+'_boundary_fourier/'))==False):
+	    print "\nCreating Directory "+file_name[0]+"_boundary_fourier ... Done"
+	    os.mkdir(file_name[0]+'_boundary_fourier',0777) 
 	else:
-	    print "\nOutput Directory "+file_name[0]+"_region_boundary already exist... Done"		
+	    print "\nOutput Directory "+file_name[0]+"_boundary_fourier already exist... Done"		
 
 	#convert array from float to uint8 for image display
 	image_output = image_output.astype('uint8')
-					
+	region_array = region_array.astype('uint8')				
 	# convert from array to image
 	image_mod=fromarray(image_output);
-	print "Saving the region growing and boundary applied image to output directory..."
+	print "Saving the region growing and boundary fourier applied image to output directory..."
 	output_name = output_name + '_total_regions_'+str(region_no)+'_time_taken_' + str(t_end-t_init)+'_sec'
 	# save the image in destination folder	
-	image_mod.save(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.gif')
+	image_mod.save(file_name[0]+'_boundary_fourier/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Output image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif   ...Done\n'
 	
-	fd= os.open(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.txt',os.O_RDWR|os.O_CREAT )
-	os.write(fd,'Normalized Chain Codes: \n')
-	os.write(fd,str(normalized_chain_codes))
-	os.write(fd,str('\n\n'))
-	os.write(fd,'Derivated Chain Codes: \n')
-	os.write(fd,str(derivated_chain_codes))
-	os.close(fd)
+	#fd= os.open(file_name[0]+'_region_boundary/'+file_name[1].split('.')[0]+output_name+'.txt',os.O_RDWR|os.O_CREAT )
+	#os.write(fd,'Normalized Chain Codes: \n')
+	#os.write(fd,str(normalized_chain_codes))
+	#os.write(fd,str('\n\n'))
+	#os.write(fd,'Derivated Chain Codes: \n')
+	#os.write(fd,str(derivated_chain_codes))
+	#os.close(fd)
 	print "----------------------------------------------------------------------------------------------------------------"
 	print ("\nTotal no. of regions are  : "+ str(region_no))	
 	print ("\nTotal time taken to run the Pogram is : "+str(t_end-t_init)+" seconds")
 	print "----------------------------------------------------------------------------------------------------------------"
 	import matplotlib.pyplot as plt
 	plt.imshow(image_output)
+	plt.imshow(region_array)
 	plt.show()
 	
 	#image_mod.show()
@@ -208,7 +209,8 @@ def boundary_detection(region_no,neighbors):
 	global region_array
 	global size
 	
-	boundaries=zeros((region_no+1,size[0]*size[1]/10),dtype=complex)
+	#boundaries=zeros((region_no+1,size[0]*size[1]/10),dtype=complex)
+	boundaries=zeros(region_no+1,dtype=list)
 	boundaries[0]=[0+0j]
 	regions = zeros(region_no+1,dtype=int)
 	
@@ -223,6 +225,7 @@ def boundary_detection(region_no,neighbors):
 				current_region = region_array[i][j]
 				region_array[i][j]=255
 				dir_count=1
+				boundaries[current_region]=complex(i,j)
 				while(True):
 							(new_i,new_j,new_v,dir_count)=boundary_pixels(i,j,new_i,new_j,new_v,current_region,dir_count,boundaries,neighbors)
 							
@@ -230,7 +233,6 @@ def boundary_detection(region_no,neighbors):
 								break									
 							if((new_v==4 and neighbors==4) or (new_v==8 and neighbors==8) ):
 								break
-				append(boundaries[current_region],complex(-1,-1))	
 	return boundaries
 	
 #Function to initiate region going through seed points
@@ -264,20 +266,34 @@ def region_detection(tolerance,gaussian_smoothing,t_init,neighbors):
 	boundaries=boundary_detection(region_no,neighbors)		
 	print "Applying Boundary Detection to the image and finding chain codes  "+" .....Done"
 	#Fourier Transform and low frequnecy shifting to the center
-	
-	#Filtereing our the fraction of frequecy according to the input given by the user
+	fft_boundaries =fft(boundaries)
+	for i in range(1,region_no+1):
+		fft_boundaries[i]= fftshift(fft_boundaries[i])
+		center = len(fft_boundaries[i])/2
+		#Filtereing our the fraction of frequecy according to the input given by the user	
+		fraction_cut = fraction_cut*len(fft_boundaries[i])
+		half_cut= int(fraction_cut)/2
+		for k in range(0,half_cut):
+			fft_boundaries[i][k]=0
+		for k in range(len(fft_boundaries)-1-half,len(boundaries)):
+			fft_boundaries[i][k]=0
+		fft_boundaries[i]=ifftshift(fft_boundaries[i])
 	
 	#inverse shift and inverse fft to get filtered bundaries
+	ifft_boundaries =ifft(fft_boundaries)
 	
 	#draw the filtered boundaries
-	
-	image_output=region_array
+	for i in range(0,size[0]+1):
+		for j in range(0,size[1]+1):
+			image_output[real(ifft_boundaries[i][j])][imag(ifft_boundaries[i][j])]=255
+
+	region_array = region_array.clip(0,255)
 	image_output = image_output.clip(0,255)	
 	output_name = '_neighbors_'+str(neighbors)+'_tolerance_'+str(tolerance)
 	if (gaussian_smoothing==1):
-		output_name = '_gaussian_smoothing_'+'_tolerance_'+str(tolerance)
+		output_name = '_gaussian_smoothing_'+'_tolerance_'+str(tolerance)+'_fraction_cut_'+str(fraction_cut)
 	
-	SaveToFile(output_name,t_init,region_no,normalized_chain_codes,derivated_chain_codes)	
+	SaveToFile(output_name,t_init,region_no)	
 	
 
 # input for neighbor approach, gaussian smoothing and tolerance value for region detection
@@ -285,27 +301,29 @@ def user_input_fun():
 	neighbors = raw_input("\n Press 4 for 4-neighbor approach or 8 for 8-neighbor approach[Default 8(Press Enter)]:  \n")
 	gaussian_smoothing = raw_input("\n Want to apply gaussian smoothing, type 1 for yes or 0 for no[Default NO(press Enter)]:  \n")
 	tolerance = raw_input("\n Type tolerance for region sperating intensity(int) criteria[press Enter for Default (Default is 10)]: \n")
+	fraction_cut=raw_input("\n Type percent of high frequencies you want to cutoff[example 25% means top 25% high frequecies will cut off][Default is 25(Press Enter)]:  \n ")
 	if(neighbors==""):
 		neighbors=8
 	if (tolerance==""):
 		tolerance=10
 	if(gaussian_smoothing=="" ):
 		gaussian_smoothing = 0
-			
-	return float(gaussian_smoothing ),float(tolerance),int(neighbors)
+	if(fraction_cut=="" ):
+		fraction_cut = .25		
+	return float(gaussian_smoothing ),float(tolerance),int(neighbors),float(fraction_cut)/100.0
 			
 
 #main function which will be run 
 def main():		
 	t_init= time()
 	# Calling the user input function to get maximum no. of regions and tolerance
-	(gaussian_smoothing,tolerance,neighbors) = user_input_fun()
+	(gaussian_smoothing,tolerance,neighbors,fraction_cut) = user_input_fun()
 	# initialization of all variables and arrays
 	init(gaussian_smoothing)
 	#calculation of seed points 
 	calculate_seed_points()
 	# call to region growing
-	region_detection(tolerance,gaussian_smoothing,t_init,neighbors)
+	region_detection(tolerance,gaussian_smoothing,t_init,neighbors,fraction_cut)
 	# in case to rerun the program		
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")
 	if(rerun==""):
