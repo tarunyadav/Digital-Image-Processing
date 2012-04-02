@@ -46,6 +46,7 @@ def init(gaussian_smoothing):
 	image_output = zeros((size[0],size[1]),dtype=float)
 	#region_array to mark region # in for each pixel
 	region_array = zeros((size[0],size[1]),dtype=float)
+	all_region_array = zeros((size[0],size[1]),dtype=float)
 	#seed_array to mark  seed points for the image, initially all are 0 means no seed is there
 	seed_array = zeros((size[0],size[1]),dtype=float)
 	#to keep count for region no.
@@ -57,6 +58,9 @@ def init(gaussian_smoothing):
 def SaveToFile(output_name,t_init,region_no):
 	global image_output			
 	global region_array
+	global image_array
+	global all_region_array
+	
 	t_end = time()
 	
 	file_name= sys.argv[1].split('/')
@@ -90,8 +94,15 @@ def SaveToFile(output_name,t_init,region_no):
 	print ("\nTotal time taken to run the Pogram is : "+str(t_end-t_init)+" seconds")
 	print "----------------------------------------------------------------------------------------------------------------"
 	import matplotlib.pyplot as plt
-	plt.imshow(image_output)
+	plt.subplot(2,2,1)
+	plt.imshow(image_array)
+	plt.subplot(2,2,2)
+	plt.imshow(all_region_array)
+	plt.subplot(2,2,3)
 	plt.imshow(region_array)
+	plt.subplot(2,2,4)
+	plt.imshow(image_output)
+
 	plt.show()
 	
 	#image_mod.show()
@@ -238,12 +249,13 @@ def boundary_detection(region_no,neighbors):
 #Function to initiate region going through seed points
 #@parameters: tolerance value, seed_array is global so need for this parameter
 #@return: calculate regions and save in ouput folder
-def region_detection(tolerance,gaussian_smoothing,t_init,neighbors):
+def region_detection(tolerance,gaussian_smoothing,t_init,neighbors,fraction_cut):
 	global region_array
 	global seed_array
 	global image_output
 	global size
 	global region_no
+	global all_region_array
 	print "Applying region growing to the image   "+" .........."
 	for i in range(0,size[0],1):
 		 for j in range(0,size[1],1):
@@ -261,31 +273,30 @@ def region_detection(tolerance,gaussian_smoothing,t_init,neighbors):
 
 	print "Applying region growing to the image   "+" ...Done"
 	region_no=region_no-1
+	all_region_array = region_array
 	#Boundary detection
 	print "Applying Boundary Detection to the image and finding chain codes  "+" ............"
 	boundaries=boundary_detection(region_no,neighbors)		
 	print "Applying Boundary Detection to the image and finding chain codes  "+" .....Done"
 	#Fourier Transform and low frequnecy shifting to the center
-	fft_boundaries =fft(boundaries)
-	for i in range(1,region_no+1):
-		fft_boundaries[i]= fftshift(fft_boundaries[i])
-		center = len(fft_boundaries[i])/2
+
+	for i in range(2,len(boundaries)):
+		fft_boundary =fftshift(fft(boundaries[i]))
 		#Filtereing our the fraction of frequecy according to the input given by the user	
-		fraction_cut = fraction_cut*len(fft_boundaries[i])
-		half_cut= int(fraction_cut)/2
-		for k in range(0,half_cut):
-			fft_boundaries[i][k]=0
-		for k in range(len(fft_boundaries)-1-half,len(boundaries)):
-			fft_boundaries[i][k]=0
-		fft_boundaries[i]=ifftshift(fft_boundaries[i])
-	
-	#inverse shift and inverse fft to get filtered bundaries
-	ifft_boundaries =ifft(fft_boundaries)
-	
+		center= len(fft_boundary)/2
+		pixel_cut = fraction_cut*len(fft_boundary)
+		half_cut= int(pixel_cut)/2
+		for k in range(0,center-half_cut):
+			fft_boundary[k]=0
+		for k in range(center+half_cut,len(fft_boundary)):
+			fft_boundary[k]=0
+		#inverse shift and inverse fft to get filtered bundaries
+		boundaries[i]=ifft(ifftshift(fft_boundary))
+
 	#draw the filtered boundaries
-	for i in range(0,size[0]+1):
-		for j in range(0,size[1]+1):
-			image_output[real(ifft_boundaries[i][j])][imag(ifft_boundaries[i][j])]=255
+	for i in range(1,len(boundaries)):
+		for j in range(0,len(boundaries[i])):
+			image_output[int(real(boundaries[i][j]))][int(imag(boundaries[i][j]))]=255
 
 	region_array = region_array.clip(0,255)
 	image_output = image_output.clip(0,255)	
@@ -301,7 +312,7 @@ def user_input_fun():
 	neighbors = raw_input("\n Press 4 for 4-neighbor approach or 8 for 8-neighbor approach[Default 8(Press Enter)]:  \n")
 	gaussian_smoothing = raw_input("\n Want to apply gaussian smoothing, type 1 for yes or 0 for no[Default NO(press Enter)]:  \n")
 	tolerance = raw_input("\n Type tolerance for region sperating intensity(int) criteria[press Enter for Default (Default is 10)]: \n")
-	fraction_cut=raw_input("\n Type percent of high frequencies you want to cutoff[example 25% means top 25% high frequecies will cut off][Default is 25(Press Enter)]:  \n ")
+	fraction_cut=raw_input("\n Type percent of low Frequecy you want to have w.r.t. lowest one[example 2% means top 2% low frequecies will remain and all other will become 0][Default is 2(Press Enter)]:  \n ")
 	if(neighbors==""):
 		neighbors=8
 	if (tolerance==""):
@@ -309,8 +320,8 @@ def user_input_fun():
 	if(gaussian_smoothing=="" ):
 		gaussian_smoothing = 0
 	if(fraction_cut=="" ):
-		fraction_cut = .25		
-	return float(gaussian_smoothing ),float(tolerance),int(neighbors),float(fraction_cut)/100.0
+		fraction_cut = 2		
+	return float(gaussian_smoothing ),float(tolerance),int(neighbors),(float(fraction_cut)/100.0)
 			
 
 #main function which will be run 
