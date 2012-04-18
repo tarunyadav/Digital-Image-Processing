@@ -21,7 +21,7 @@ from time import *
 import string
 sys.setrecursionlimit(2000)
 ## import all functions of morphological operators defined in the function file
-from morpho_operators.py import *
+from morpho_operators import *
 
 def init():
 	global image
@@ -40,7 +40,7 @@ def init():
 #Save the output file
 def SaveToFile(output_name,t_init):
 	global image_output			
-	
+	global image_array
 	t_end = time()
 	
 	file_name= sys.argv[1].split('/')
@@ -67,51 +67,62 @@ def SaveToFile(output_name,t_init):
 	print "----------------------------------------------------------------------------------------------------------------"
 	
 	import matplotlib.pyplot as plt
+	plt.subplot(1,3,1)
+	plt.imshow(image_array)
+	plt.subplot(1,3,2)
 	plt.imshow(image_output)
+	plt.subplot(1,3,3)
+	plt.imshow(image_output-image_array)
 	plt.show()
 	
 	#image_mod.show()
 
 # input for neighbor approach, gaussian smoothing and tolerance value for region detection
 def user_input_fun():
-	operator = raw_input("\n To apply Dilation Operator Press 1:  \n To apply Erosion Operator Press 2: \n To apply Open Operator Press 3: \n To apply Close Operator Press 4: \n To find Skeleton Press 5: \n Default is Skeleton [Press Enter]: ")
+	operator = raw_input("\n To apply Dilation Operator Press 1:  \n To apply Erosion Operator Press 2: \n To apply Open Operator Press 3: \n To apply Close Operator Press 4: \n To find Skeleton Press 5: \n Default is Skeleton [Press Enter]: \n")
 
 	if(operator==""):
 		operator = 5
-	elif(operator !="1" && operator !="2" && operator !="3" && operator !="4"):
+	elif(operator !="1" and operator !="2" and operator !="3" and operator !="4"):
 		print(" Please choose the one of the followings: ")
 		user_input_function();
-			
-	return int(operator)
+	N = raw_input("\n How many times you want to apply operator [Default is 2[Press Enter]]: ")
+	if(N==""):
+		N = 2
+	return int(operator),int(N)
 			
 				
 #main function which will be run 
 def main():		
 	t_init= time()
 	# Calling the user input function to get maximum no. of regions and tolerance
-	operator = user_input_fun()
+	(operator,N) = user_input_fun()
 	# initialization of all variables and arrays
 	init()
 	global image_array
+	global image_output
 	St_element = zeros((3,3),dtype=int)
-	St_element[0]= [0,0,0]
-	St_element[1]= [0,1,1]
-	St_element[2]= [0,0,0]
-	if (operator==1):
-		Dilation(image_array,St_element)
-		output_name = '_Dilated_'
-	elif (operator==2):
-		Erosion(image_array,St_element)
-		output_name = '_Eroded_'
-	elif (operator==3):
-		Open(image_array,St_element)
-		output_name = '_Opened_'
-	elif (operator==4):	
-		Close(image_array,St_element)
-		output_name = '_Closed_'
-	elif (operator==5):
-		Skeleton(image_array,St_element)
-		output_name = '_Skeleton_'
+	St_element[0]= [1,1,1]
+	St_element[1]= [1,1,1]
+	St_element[2]= [1,1,1]
+	image_output=image_array
+	for i in range(0,N):
+		if (operator==1):
+			image_output=Dilation(image_output,St_element)
+			output_name = '_Dilated_'
+		elif (operator==2):
+			image_output=Erosion(image_output,St_element)
+			output_name = '_Eroded_'
+		elif (operator==3):
+			image_output=Open(image_output,St_element)
+			output_name = '_Opened_'
+		elif (operator==4):	
+			image_output=Close(image_output,St_element)
+			output_name = '_Closed_'
+		elif (operator==5):
+			image_output=Skeleton(image_output,St_element)
+			output_name = '_Skeleton_'
+	
 	SaveToFile(output_name,t_init)
 	# in case to rerun the program		
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")

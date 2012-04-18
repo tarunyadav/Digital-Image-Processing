@@ -26,12 +26,12 @@ def Dilation(Image, St_element):
 	st_size=St_element.shape
 	N = st_size[0]
 	M=st_size[1]
-	Image_dialted= zeros((size[0],size[1]),dtype=int);
+	Image_dilated= zeros((size[0],size[1]),dtype=int);
 	mask = (St_element==1)
-	
+	window=zeros((N,M),dtype=float)
 	for i in range(0,size[0],1):
 			 for j in range(0,size[1],1):
-			 		if(Image[i][j]==1):
+			 		if(Image[i][j]==255 ):
 					    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]) or j in range(0,(M/2)) or j in range(size[1]-(M/2),size[1])):
 					    				start_row = max(-(N/2),0-i)
 					    				end_row = min((N/2),size[0]-1-i)
@@ -42,11 +42,18 @@ def Dilation(Image, St_element):
 									end_row=(N/2)
 									start_column=-(M/2)
 									end_column=(M/2)
-									
-							Window=Image[i+start_row:i+end_row][j+start_column:j+end_column]
-							window[N/2][m/2]=0
-							Window[mask]=1
-							Image_dilated[i+start_row:i+end_row][j+start_column:j+end_column] = Window
+							origin = Image[i][j]		
+							Image[i][j]=0
+							for m in range(start_row,end_row+1):
+								for n in range(start_column,end_column+1):
+										window[m+1][n+1]=Image[i+m][j+n]
+							#window=Image[(i+start_row):(i+end_row)][(j+start_column):(j+end_column)]
+							Image[i][j]=origin
+							window[mask]=255
+							#Image_dilated[i+start_row:i+end_row][j+start_column:j+end_column] = window
+							for m in range(start_row,end_row+1):
+								for n in range(start_column,end_column+1):
+										Image_dilated[i+m][j+n]=window[m+1][n+1]
 										
 	return Image_dilated
 		
@@ -60,10 +67,10 @@ def Erosion(Image, St_element):
 	M=st_size[1]
 	Image_eroded= zeros((size[0],size[1]),dtype=int);
 	mask = (St_element==1)
-	
+	window=zeros((N,M),dtype=float)
 	for i in range(0,size[0],1):
 			 for j in range(0,size[1],1):
-			 		if(Image[i][j]==1):
+			 		if((St_element[N/2][M/2]==1 and Image[i][j]==255 )or St_element[N/2][M/2]==0):
 					    		if(i in range(0,(N/2)) or  i in range (size[0]-(N/2), size[0]) or j in range(0,(M/2)) or j in range(size[1]-(M/2),size[1])):
 					    				start_row = max(-(N/2),0-i)
 					    				end_row = min((N/2),size[0]-1-i)
@@ -75,21 +82,24 @@ def Erosion(Image, St_element):
 									start_column=-(M/2)
 									end_column=(M/2)
 									
-							Window=Image[i+start_row:i+end_row][j+start_column:j+end_column]
-							Window_mask = (Window==1)
-							
-							if (all(mask==Window_mask)):
-								Image_eroded[i][j] = 1
+							#window=Image[i+start_row:i+end_row][j+start_column:j+end_column]
+							for m in range(start_row,end_row+1):
+								for n in range(start_column,end_column+1):
+										window[m+1][n+1]=Image[i+m][j+n]
+								
+							window_mask = (window==255)
+							if (all(mask==window_mask)):
+								Image_eroded[i][j] = 255
 							else:
 								Image_eroded[i][j] = 0
 										
-	return Image_dilated
+	return Image_eroded
 
 #Function to apply open on a given image
 #@parameters: image and structure element
 #@return: image after applying open to it	
 def Open(Image, St_element):
-	Image_eroded=Erosion(Image_dilated,St_element)
+	Image_eroded=Erosion(Image,St_element)
 	Image_opened=Dilation(Image_eroded,St_element)
 	return Image_opened
 
@@ -104,7 +114,7 @@ def Close(Image, St_element):
 #Function to find skeleton for a given image
 #@parameters: image and structure element
 #@return: Skeleton of the image
-def Close(Image, St_element):
+def Skeleton(Image, St_element):
 	Image_dilated=Dilation(Image,St_element)
 	Image_closed=Erosion(Image_dilated,St_element)
-	return Image_closed
+	return Image_Skeleton
