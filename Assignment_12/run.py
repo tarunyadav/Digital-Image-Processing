@@ -83,12 +83,12 @@ def user_input_fun():
 
 	if(operator==""):
 		operator = 5
-	elif(operator !="1" and operator !="2" and operator !="3" and operator !="4"):
+	elif(operator !="1" and operator !="2" and operator !="3" and operator !="4" and operator !="5"):
 		print(" Please choose the one of the followings: ")
 		user_input_function();
-	N = raw_input("\n How many times you want to apply operator [Default is 2[Press Enter]]: ")
+	N = raw_input("\n How many times you want to apply operator [Default is 1[Press Enter]]: ")
 	if(N==""):
-		N = 2
+		N = 1
 	return int(operator),int(N)
 			
 				
@@ -101,10 +101,11 @@ def main():
 	init()
 	global image_array
 	global image_output
-	St_element = zeros((3,3),dtype=int)
-	St_element[0]= [1,1,1]
+	#image_array[image_array==255]=1
+	St_element = zeros((3,3),dtype=float)
+	St_element[0]= [0,1,0]
 	St_element[1]= [1,1,1]
-	St_element[2]= [1,1,1]
+	St_element[2]= [0,1,0]
 	image_output=image_array
 	for i in range(0,N):
 		if (operator==1):
