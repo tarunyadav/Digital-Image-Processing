@@ -57,7 +57,7 @@ def SaveToFile(output_name,t_init):
 	# convert from array to image
 	image_mod=fromarray(image_output);
 	print "Saving the operator applied image to output directory..."
-	output_name = output_name + '_time_taken_' + str(t_end-t_init)+'_sec'
+	output_name = output_name + 'time_taken_' + str(t_end-t_init)+'_sec'
 	# save the image in destination folder	
 	image_mod.save(file_name[0]+'_morpho_operators/'+file_name[1].split('.')[0]+output_name+'.gif')
 	print "Output image is saved in output Directory with name: "+ file_name[1].split('.')[0]+output_name+'.gif   ...Done\n'
@@ -103,9 +103,9 @@ def main():
 	global image_output
 	#image_array[image_array==255]=1
 	St_element = zeros((3,3),dtype=float)
-	St_element[0]= [0,1,0]
-	St_element[1]= [1,1,1]
-	St_element[2]= [0,1,0]
+	St_element[0]= [1,1,1]
+	St_element[1]= [1,0,1]
+	St_element[2]= [1,1,1]
 	image_output=image_array
 	for i in range(0,N):
 		if (operator==1):
@@ -123,7 +123,7 @@ def main():
 		elif (operator==5):
 			image_output=Skeleton(image_output,St_element)
 			output_name = '_Skeleton_'
-	
+	output_name=output_name+str(N)+'_Times_'
 	SaveToFile(output_name,t_init)
 	# in case to rerun the program		
 	rerun = raw_input("\nPress 'q' to quit  : \n"+"Press Enter to run again: \n")

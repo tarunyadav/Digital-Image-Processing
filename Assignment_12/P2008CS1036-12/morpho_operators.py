@@ -1,7 +1,7 @@
 ## 
  #          File: morpho_operators.py
  #          Author: Tarun Yadav
- #          Last Modified: April 18, 2012
+ #          Last Modified: April 20, 2012
  #          Topic:  Morphological operators dilation, erosion, open and close
  #          Instructor: Dr. Anil Seth
  # ----------------------------------------------------------------
